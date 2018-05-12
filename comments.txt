@@ -1,0 +1,3 @@
+-Implement two-way repeated measures ANOVA (repeatead measure - Holm-Sidak)****
+-Implement one way ANOVA
+-Implement Brown-Forsythe test (for equal variance)

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Flask Vib app</title>
+</head>
+<body>
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  TeX: {
+     equationNumbers: {  autoNumber: "AMS"  },
+     extensions: ["AMSmath.js", "AMSsymbols.js", "autobold.js", "color.js"]
+  }
+});
+</script>
+<script type="text/javascript"
+ src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+<h2>Previous simulations</h2>
+<p align="right"><a href="/">Back to index</a></p>
+{% if data %}
+  {% for post in data %}
+    <hr>
+    <table>
+    <tr>
+    <td valign="top" width="30%">
+    <h3>Input</h3>
+      <table>
+      {% for field in post.form %}
+        <tr><td>{{ field.label }}:&nbsp;</td>
+            <td>{{ field.data }}</td></tr>
+      {% endfor %}
+      </table>
+    <h3>Comments</h3>
+    {{ post.comments }}
+    </td><td valign="top" width="60%">
+    <h3>Results</h3>
+    {{ post.result|safe }}
+    {% if post.plot != None %}
+        <img src="data:image/png;base64,{{ post.plot|safe }}" width="400">
+    {% endif %}
+    {% if True %}
+      <p>
+      {{ comments }}
+    {% endif %}
+    </td><td valign="top" width="60%">
+    <p>
+    <form method="POST" action="/delete/{{ post.id }}">
+      <input type=submit value="Delete"
+       title="Delete this post from database">
+    </form>
+    </td></tr>
+    </table>
+   {% endfor %}
+   <hr>
+   <center>
+   <form method="POST" action="/delete/-1">
+     <input type=submit value="Delete all">
+   </form>
+   </center>
+{% else %}
+  No previous simulations
+{% endif %}
+</body>
+</html>

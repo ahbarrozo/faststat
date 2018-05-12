@@ -1,0 +1,16 @@
+td.name { color: blue; }
+
+.input-group-addon {
+    min-width: 50px;
+    margin: 0px;
+    text-align: center;
+}
+
+.input, .span {
+    box-sizing: content-box;
+    -moz-box-sizing: content-box;
+}
+
+select {
+    width: 150px;
+}

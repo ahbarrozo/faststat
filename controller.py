@@ -23,13 +23,16 @@ if not os.path.isdir(UPLOAD_DIR):
 # Allowed file types for file upload
 ALLOWED_EXTENSIONS = set(['xls', 'xlsx'])
 
+
 def allowed_file(filename):
     """Does filename have the right extension?"""
     return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
+
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.query(User).get(user_id)
+
 
 @app.route('/', methods=['GET', 'POST'])
 def index():

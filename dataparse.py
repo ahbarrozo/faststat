@@ -76,8 +76,8 @@ def bin_dataframe_generator(dataSet, binParameter, numBins):
 
     return binDataSet
 
-# prototype for normality test. Will need to implement a normality attribute
 
+# prototype for normality test. Will need to implement a normality attribute
 class DataSet:
     def __init__(self, statData, events, **kwargs):
         self._data_frame = statData
@@ -95,43 +95,33 @@ class DataSet:
         
     def data_name(self):
         return str(self._name) + " : " + str(self._data_set.name)        
-    
 
     def data_frame(self):
         return self._data_frame
-    
 
     def data_set(self):
         return self._data_set
-    
-    
+
     def isnormal(self):
         return self._isnormal
-    
-    
+
     def data_events(self):
         return self._events
 
-    
     def sampling_size(self):
         return len(self._data_set)   
-    
-    
+
     def mean_value(self):
         return self._data_set.mean()
-    
-    
+
     def median_value(self):
         return self._data_set.median()
-    
-    
+
     def quantile25_value(self):
         return self._data_set.quantile(.25)
-    
-    
+
     def quantile75_value(self):
         return self._data_set.quantile(.75)
-    
     
     def std_value(self):
         return self._data_set.std()

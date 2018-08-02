@@ -1,5 +1,4 @@
-from numpy import exp, cos, linspace, mean, std, loadtxt, where
-from tabulate import tabulate
+from numpy import mean, std, loadtxt, where
 import matplotlib.pyplot as plt
 import os, time, glob
 import urllib
@@ -16,11 +15,13 @@ Data from file <tt>%s</tt>:
 <tr><td> st.dev. </td><td> %.3g </td></tr>
 """ % (filename, mean(data), std(data))
 
+
 def check_outliers(filtered, unfiltered):
     comparison = unfiltered.data_set() == filtered.data_set()
 
     if False in comparison:
         return where(comparison==False)
+
 
 def display_stat_info(dataset):
 
@@ -39,6 +40,7 @@ def display_stat_info(dataset):
         
     return statInfo
 
+
 def null_hypothesis_tests(datasetA, datasetB):
 
     statInfo= "<h3>Null Hypothesis Tests</h3> <br/>"    
@@ -52,7 +54,8 @@ def null_hypothesis_tests(datasetA, datasetB):
         statInfo += "Student's t-test results: t = {0}, P = {1}".format(t_tTest, p_tTest) + "<br/>"
         statInfo += "Wilcoxon rank-sum results: u = {0}, P = {1}".format(u_rankSums, p_rankSums) + "<br/>"
     return statInfo
-        
+
+
 def normality_tests(datasetA, datasetB):
     
     statInfo = "<h3>Normality Tests</h3> <br/>"
@@ -80,7 +83,15 @@ def normality_tests(datasetA, datasetB):
 
     return statInfo
 
-# prototype for two-way ANOVA
+# prototype for one-way ANOVA
+
+def one_way_anova(*args):
+
+    statInfo = "<h3>One-way ANOVA</h3>"
+    fOneWayANOVA, pOneWayANOVA = stats.f_oneway(*args)
+    statInfo += "One-way ANOVA results: <br/> F = {0}, P = {1}".format(fOneWayANOVA, pOneWayANOVA)
+
+    return statInfo
 
 def two_way_anova(statData, datasetA, datasetB, parameter, paramValueA, paramValueB, binVariable):
 
@@ -172,3 +183,97 @@ def two_way_anova(statData, datasetA, datasetB, parameter, paramValueA, paramVal
     return pd.DataFrame(results, columns=columns,
                         index=[parameter, 'bin', 
                         parameter + ':bin', 'Residual']), urllib.parse.quote(figdata_png)
+
+
+def two_way_anova_repmsr(statData, datasetA, datasetB, parameter, paramValueA, paramValueB, binVariable):
+    from statsmodels.formula.api import ols
+    from statsmodels.stats.anova import anova_lm
+    from statsmodels.graphics.factorplots import interaction_plot
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    from dataparse import bin_dataframe_generator, bins_subset, DataSet
+
+    binNum = datasetA.data_frame().columns.str.contains(
+        binVariable + ' bin ').sum()  # counts number of bins for given bin variable
+
+    subdatasetA = DataSet(datasetA.data_frame(),
+                          datasetA.data_frame().columns[statData.columns.get_loc(binVariable + ' bin 1') + binNum])
+    subdatasetB = DataSet(datasetB.data_frame(),
+                          datasetB.data_frame().columns[statData.columns.get_loc(binVariable + ' bin 1') + binNum])
+    binDataSetA = bin_dataframe_generator(bins_subset(subdatasetA.data_frame(), binVariable), binVariable, 3)
+    binDataSetB = bin_dataframe_generator(bins_subset(subdatasetB.data_frame(), binVariable), binVariable, 3)
+    binDataSetA[parameter] = paramValueA
+    binDataSetB[parameter] = paramValueB
+    anovaDataSet = binDataSetA.append(binDataSetB)
+
+    fig = interaction_plot(anovaDataSet['bin'],
+                           anovaDataSet[parameter],
+                           anovaDataSet[binVariable],
+                           colors=['red', 'blue'],
+                           markers=['D', '^'], ms=10)
+
+    from io import BytesIO
+    figfile = BytesIO()
+    plt.savefig(figfile, format='png')
+    figfile.seek(0)
+
+    import base64
+    figdata_png = base64.b64encode(figfile.getvalue())
+
+    # Degrees of freedom - df
+
+    N = len(anovaDataSet[binVariable])
+    dfA = len(anovaDataSet['bin'].unique()) - 1
+    dfB = len(anovaDataSet[parameter].unique()) - 1
+    dfAxB = dfA * dfB
+    dfWithin = N - (len(anovaDataSet['bin'].unique()) * len(anovaDataSet[parameter].unique()))
+
+    # Sum of squares - ssq (factors A, B and total)
+
+    grand_mean = anovaDataSet[binVariable].mean()
+    ssqA = sum([(anovaDataSet[anovaDataSet[parameter] == l][binVariable].mean() - grand_mean) ** 2 for l in
+                anovaDataSet[parameter]])
+    ssqB = sum(
+        [(anovaDataSet[anovaDataSet['bin'] == l][binVariable].mean() - grand_mean) ** 2 for l in anovaDataSet['bin']])
+    ssqTotal = sum((anovaDataSet[binVariable] - grand_mean) ** 2)
+
+    # Sum of Squares Within (error/residual)
+
+    bin_meansA = [binDataSetA[binDataSetA['bin'] == d][binVariable].mean() for d in binDataSetA['bin']]
+    bin_meansB = [binDataSetB[binDataSetB['bin'] == d][binVariable].mean() for d in binDataSetB['bin']]
+    ssqWithin = sum((binDataSetB[binVariable] - bin_meansB) ** 2) + sum((binDataSetA[binVariable] - bin_meansA) ** 2)
+
+    # Sum of Squares Interaction
+
+    ssqAxB = ssqTotal - ssqA - ssqB - ssqWithin
+
+    # Mean Squares
+
+    msA = ssqA / dfA
+    msB = ssqB / dfB
+    msAxB = ssqAxB / dfAxB
+    msWithin = ssqWithin / dfWithin
+
+    # F-ratio
+
+    fA = msA / msWithin
+    fB = msB / msWithin
+    fAxB = msAxB / msWithin
+
+    # Obtaining p-values
+
+    pA = stats.f.sf(fA, dfA, dfWithin)
+    pB = stats.f.sf(fB, dfB, dfWithin)
+    pAxB = stats.f.sf(fAxB, dfAxB, dfWithin)
+
+    # table with results from ANOVA
+
+    results = {'sum_sq': [ssqA, ssqB, ssqAxB, ssqWithin],
+               'df': [dfA, dfB, dfAxB, dfWithin],
+               'F': [fA, fB, fAxB, 'NaN'],
+               'PR(>F)': [pA, pB, pAxB, 'NaN']}
+    columns = ['sum_sq', 'df', 'F', 'PR(>F)']
+
+    return pd.DataFrame(results, columns=columns,
+                        index=[parameter, 'bin',
+                               parameter + ':bin', 'Residual']), urllib.parse.quote(figdata_png), anovaDataSet

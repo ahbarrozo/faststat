@@ -1,5 +1,4 @@
 import pandas as pd
-import os, sys
 from scipy import stats
 from outliers import smirnov_grubbs as grubbs
 

@@ -5,7 +5,7 @@ from flask_login import LoginManager, current_user, login_user, logout_user, log
 import sys, os, urllib
 from compute import check_outliers, display_stat_info, normality_tests, null_hypothesis_tests, two_way_anova
 from app import app, statData, statParm, statFunc, parmNames, dataset1, dataset2
-from werkzeug import secure_filename
+from werkzeug.utils import secure_filename
 from dataparse import DataSet, readData
 
 login_manager = LoginManager()
@@ -24,9 +24,9 @@ if not os.path.isdir(UPLOAD_DIR):
 ALLOWED_EXTENSIONS = {'xls', 'xlsx'}
 
 
-def allowed_file(filename):
+def allowed_file(file_name):
     """Does filename have the right extension?"""
-    return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+    return '.' in file_name and file_name.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 
 @login_manager.user_loader

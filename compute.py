@@ -1,6 +1,5 @@
 from numpy import mean, std, loadtxt, where
-import matplotlib.pyplot as plt
-import os, time, glob
+import os
 import urllib
 from scipy import stats
 from statsmodels.graphics.factorplots import interaction_plot
@@ -89,36 +88,41 @@ def normality_tests(datasetA, datasetB):
 
 # prototype for one-way ANOVA
 
-def one_way_anova(statData, parameter, paramValues, binVariable, *args):
-
-    # counts number of datasets passed
-    num_args = len(args)
-
-    if num_args != len(paramValues):
-        return "Error: number of parameter values and datasets is different."
-
-    alldata = []
-    suballdata = []
-    binalldata = []
+def one_way_anova(stat_data, dataset, bin_var):
 
     # counts number of bins for given bin variable
-    binNum = args[0].data_frame().columns.str.contains(binVariable + ' bin ').sum()
+    bin_num = dataset.data_frame().columns.str.contains(bin_var + ' bin ').sum()
+    subdataset = DataSet(dataset.data_frame(),
+                         dataset.data_frame().columns[stat_data.columns.get_loc(bin_var + ' bin 1') + bin_num])
+    bindata = bin_dataframe_generator(bins_subset(subdataset.data_frame(), bin_var), bin_var, 3)
+    anova_dataset = bindata
 
-    for i in range(0, num_args):
-        suballdata.append(DataSet(args[i].data_frame(),
-                          args[i].data_frame().columns[statData.columns.get_loc(binVariable + 'bin 1') + binNum]))
-        binalldata.append(bin_dataframe_generator(bins_subset(suballdata[i].data_frame(), binVariable), binVariable, 3))
-        binalldata[i][parameter] = paramValues[i]
+    # Degrees of freedom - df
 
-    anovaDataSet = binalldata[0]
-    for i in range(1, num_args):
-        anovaDataSet = anovaDataSet.append(binalldata)
+    N = len(anova_dataset[bin_var])
+    grand_mean = anova_dataset[bin_var].mean()
 
-    statInfo = "<h3>One-way ANOVA</h3>"
-    fOneWayANOVA, pOneWayANOVA = stats.f_oneway(*args)
-    statInfo += "One-way ANOVA results: <br/> F = {0}, P = {1}".format(fOneWayANOVA, pOneWayANOVA)
+    df_err = len(anova_dataset['bin'].unique()) - bin_num
+    ms_err = sum([(anova_dataset[anova_dataset['bin'] == b][bin_var].mean() - grand_mean) ** 2 for b in
+                 anova_dataset['bin']]) / len(anova_dataset['bin'])
+    ss_err = ms_err * df_err
 
-    return statInfo
+    ss_means = sum((anova_dataset[bin_var] - grand_mean)**2)
+    ms_between = ss_means / (bin_num - 1)
+
+    df_groups = bin_num - 1
+    ss_groups = ms_between * N / bin_num
+
+    F = ms_between / ms_err
+
+    print(ms_between, ms_err, grand_mean, ss_means, F)
+
+    stat_info = "<h3>One-way ANOVA</h3>"
+    anova_list = [anova_dataset[anova_dataset['bin'] == b][bin_var] for b in range(1, bin_num + 1)]
+    f_one_way_anova, p_one_way_anova = stats.f_oneway(*anova_list)
+    stat_info += f"One-way ANOVA results: <br/> F = {f_one_way_anova}, P = {p_one_way_anova}"
+
+    return stat_info
 
 def two_way_anova(statData, datasetA, datasetB, parameter, paramValueA, paramValueB, binVariable):
 
@@ -132,8 +136,10 @@ def two_way_anova(statData, datasetA, datasetB, parameter, paramValueA, paramVal
 
     binNum = datasetA.data_frame().columns.str.contains(binVariable + ' bin ').sum() # counts number of bins for given bin variable
     
-    subdatasetA = DataSet(datasetA.data_frame(), datasetA.data_frame().columns[statData.columns.get_loc(binVariable + ' bin 1') + binNum])
-    subdatasetB = DataSet(datasetB.data_frame(), datasetB.data_frame().columns[statData.columns.get_loc(binVariable + ' bin 1') + binNum])
+    subdatasetA = DataSet(datasetA.data_frame(),
+                          datasetA.data_frame().columns[statData.columns.get_loc(binVariable + ' bin 1') + binNum])
+    subdatasetB = DataSet(datasetB.data_frame(),
+                          datasetB.data_frame().columns[statData.columns.get_loc(binVariable + ' bin 1') + binNum])
     binDataSetA = bin_dataframe_generator(bins_subset(subdatasetA.data_frame(), binVariable), binVariable, 3)
     binDataSetB = bin_dataframe_generator(bins_subset(subdatasetB.data_frame(), binVariable), binVariable, 3)
     binDataSetA[parameter] = paramValueA

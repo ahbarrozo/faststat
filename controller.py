@@ -21,7 +21,7 @@ if not os.path.isdir(UPLOAD_DIR):
     os.mkdir(UPLOAD_DIR)
 
 # Allowed file types for file upload
-ALLOWED_EXTENSIONS = set(['xls', 'xlsx'])
+ALLOWED_EXTENSIONS = {'xls', 'xlsx'}
 
 
 def allowed_file(filename):
@@ -68,25 +68,22 @@ def index():
                 # Store names of all statistical parameters (first row of the spread sheet)
                 parmNames = statData.columns.values.tolist()
 
-            return render_template("view_input.html", form=form, 
-                                    user=user, filename=filename)
+            return render_template("view_input.html", form=form, user=user, filename=filename)
 
         # Choice of statistical analysis
-        if request.form.get('selectfunc') == 'Statistical Info':
+        if request.form.get('selectfunc') == 'Statistical Info' or request.form.get('selectfunc') == 'One-way ANOVA':
             selectfunc = request.form.get('selectfunc')
             statFunc = selectfunc
-            return render_template("view_statinfo.html", form=form, 
-                                    user=user, parmNames=parmNames, 
-                                    selectfunc=selectfunc, parms=[])
+            return render_template("view_statinfo.html", form=form, user=user, parmNames=parmNames,
+                                   selectfunc=selectfunc, parms=[])
 
         elif (request.form.get('selectfunc') == 'Normality Tests' or 
               request.form.get('selectfunc') == 'Null Hypothesis Tests' or 
               request.form.get('selectfunc') == 'Two-way ANOVA'):
             selectfunc = request.form.get('selectfunc')
             statFunc = selectfunc
-            return render_template("view_normtests.html", form=form, 
-                                    user=user, parmNames=parmNames, 
-                                    selectfunc=selectfunc, parms=[])
+            return render_template("view_normtests.html", form=form, user=user, parmNames=parmNames,
+                                   selectfunc=selectfunc, parms=[])
       
         # Setup for simple statistical info display: one dataset
         if statFunc == 'Statistical Info':
@@ -97,9 +94,9 @@ def index():
                 parms.append(request.form.get('parm1B'))
                 parmValues.append(list(set(statData[parms[0]])))
                 parmValues.append(list(set(statData[parms[1]])))
-                return render_template("view_statinfo.html", form=form, 
-                                        user=user, parmNames=parmNames, 
-                                        selectfunc=statFunc, parms=parms, 
+                return render_template("view_statinfo.html", form=form,
+                                        user=user, parmNames=parmNames,
+                                        selectfunc=statFunc, parms=parms,
                                         parmValues=parmValues,statready=False)
 
             # Choice of values of parameters to include in dataset.
@@ -116,10 +113,10 @@ def index():
                 statParm[0][request.form.get('parm1A')] = values[0]
                 statParm[0][request.form.get('parm1B')] = values[1]
 
-                return render_template("view_statinfo.html", form=form, 
-                                        user=user, parmNames=parmNames, 
-                                        selectfunc=statFunc, parms=parms, 
-                                        values=values, statready=True)
+                return render_template("view_statinfo.html", form=form,
+                                       user=user, parmNames=parmNames,
+                                       selectfunc=statFunc, parms=parms,
+                                       values=values, statready=True)
 
             # Choice of property to perform statistics on, building dataset and getting results
             elif request.form.get('getproperty'):
@@ -128,7 +125,62 @@ def index():
 
                 if len(dataset1.data_frame()) < 2:
                     result = "Insufficient data for the chosen parameters <br/>"
-                    return render_template("view_statinfo.html", form=form, 
+                    return render_template("view_statinfo.html", form=form, user=user, result=result,
+                                           parmNames=parmNames, selectfunc=statFunc,
+                                           parms=parms, parmValues=parmValues, statready=False)
+
+                result = display_stat_info(dataset1)
+
+                if user.is_authenticated:
+                    object = Compute()
+                    form.populate_obj(object)
+                    object.result = result
+                    object.plot = plot
+                    object.user = user
+                    object.filename = filename
+                    db.session.add(object)
+                    db.session.commit()
+
+                return render_template("view_output.html", form=form, result=result, plot=None, user=user)
+
+        if statFunc == 'One-way ANOVA':
+
+            # Choice of parameters used for filtering data
+            if request.form.get('parms'):
+                parms.append(request.form.get('parm1A'))
+                parms.append(request.form.get('parm1B'))
+                parmValues.append(list(set(statData[parms[0]])))
+                parmValues.append(list(set(statData[parms[1]])))
+                return render_template("view_owanova.html", form=form, user=user, parmNames=parmNames,
+                                       selectfunc=statFunc, parms=parms, parmValues=parmValues, statready=False)
+
+            # Choice of values of parameters to include in dataset.
+            elif request.form.get('values'):
+                parms.append(request.form.get('parm1A'))
+                parms.append(request.form.get('parm1B'))
+                values.append(request.form.get('value1A'))
+                values.append(request.form.get('value1B'))
+
+                # Converts values from str to int if they are numbers
+                for index in range(0, len(values)):
+                    if values[index].isdigit():
+                        values[index] = int(values[index])
+                statParm[0][request.form.get('parm1A')] = values[0]
+                statParm[0][request.form.get('parm1B')] = values[1]
+
+                return render_template("view_owanova.html", form=form,
+                                       user=user, parmNames=parmNames,
+                                       selectfunc=statFunc, parms=parms,
+                                       values=values, statready=True)
+
+            # Choice of property to perform statistics on, building dataset and getting results
+            elif request.form.get('getproperty'):
+                statproperty = request.form.get('statproperty')
+                dataset1 = DataSet(statData, statproperty, **statParm[0])
+
+                if len(dataset1.data_frame()) < 2:
+                    result = "Insufficient data for the chosen parameters <br/>"
+                    return render_template("view_owanova.html", form=form,
                                             user=user, result=result, 
                                             parmNames=parmNames, selectfunc=statFunc, 
                                             parms=parms, parmValues=parmValues, 

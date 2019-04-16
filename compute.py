@@ -3,6 +3,10 @@ import matplotlib.pyplot as plt
 import os, time, glob
 import urllib
 from scipy import stats
+from statsmodels.graphics.factorplots import interaction_plot
+import matplotlib.pyplot as plt
+import pandas as pd
+from dataparse import bin_dataframe_generator, bins_subset, DataSet
 
 
 def compute_mean_std(filename=None):
@@ -85,7 +89,30 @@ def normality_tests(datasetA, datasetB):
 
 # prototype for one-way ANOVA
 
-def one_way_anova(*args):
+def one_way_anova(statData, parameter, paramValues, binVariable, *args):
+
+    # counts number of datasets passed
+    num_args = len(args)
+
+    if num_args != len(paramValues):
+        return "Error: number of parameter values and datasets is different."
+
+    alldata = []
+    suballdata = []
+    binalldata = []
+
+    # counts number of bins for given bin variable
+    binNum = args[0].data_frame().columns.str.contains(binVariable + ' bin ').sum()
+
+    for i in range(0, num_args):
+        suballdata.append(DataSet(args[i].data_frame(),
+                          args[i].data_frame().columns[statData.columns.get_loc(binVariable + 'bin 1') + binNum]))
+        binalldata.append(bin_dataframe_generator(bins_subset(suballdata[i].data_frame(), binVariable), binVariable, 3))
+        binalldata[i][parameter] = paramValues[i]
+
+    anovaDataSet = binalldata[0]
+    for i in range(1, num_args):
+        anovaDataSet = anovaDataSet.append(binalldata)
 
     statInfo = "<h3>One-way ANOVA</h3>"
     fOneWayANOVA, pOneWayANOVA = stats.f_oneway(*args)
@@ -97,10 +124,10 @@ def two_way_anova(statData, datasetA, datasetB, parameter, paramValueA, paramVal
 
     from statsmodels.formula.api import ols
     from statsmodels.stats.anova import anova_lm
-    from statsmodels.graphics.factorplots import interaction_plot
-    import matplotlib.pyplot as plt
-    import pandas as pd
-    from dataparse import bin_dataframe_generator, bins_subset, DataSet
+    #from statsmodels.graphics.factorplots import interaction_plot
+    #import matplotlib.pyplot as plt
+    #import pandas as pd
+    #from dataparse import bin_dataframe_generator, bins_subset, DataSet
 
 
     binNum = datasetA.data_frame().columns.str.contains(binVariable + ' bin ').sum() # counts number of bins for given bin variable

@@ -12,7 +12,8 @@ def readData(inputFile):
     renamedColumns = list(inputData.columns)
     binCount = 1
 
-    for i in range(len(renamedColumns)): # rename 'Unnamed' columns that are formed from merged cells. These will form bins for analysis
+    for i in range(len(renamedColumns)):
+        """rename 'Unnamed' columns that are formed from merged cells. These will form bins for analysis"""
         if renamedColumns[i].find("Unnamed") >= 0:
             binCount += 1
             renamedColumns[i] = renamedColumns[i-binCount+1] + ' bin ' + str(binCount)
@@ -90,7 +91,7 @@ class DataSet:
                 self._data_set = filter_numeric_data(self._data_frame, events)
         except ValueError:
             pass
-        self._isnormal = True # setting as True temporarily
+        self._isnormal = True  # setting as True temporarily
         self._events = events
         
     def data_name(self):

@@ -96,7 +96,8 @@ def one_way_anova(stat_data, dataset, bin_var):
     # counts number of bins for given bin variable
     bin_num = dataset.data_frame().columns.str.contains(bin_var + ' bin ').sum()
     subdataset = DataSet(dataset.data_frame(),
-                         dataset.data_frame().columns[stat_data.columns.get_loc(bin_var + ' bin 1') + bin_num])
+                         dataset.data_frame().columns[dataset.data_frame().columns.get_loc(bin_var +
+                                                                                           ' bin 1') + bin_num])
     anova_dataset = bin_dataframe_generator(bins_subset(subdataset.data_frame(), bin_var), bin_var, 3)
     bin_list = anova_dataset['bin'].unique()
     bin_size = [anova_dataset[anova_dataset['bin'] == b][bin_var].shape[0] for b in bin_list]
@@ -119,28 +120,20 @@ def one_way_anova(stat_data, dataset, bin_var):
 
     df_groups = bin_num - 1
     ss_groups = ms_between * N / bin_num
+    f_one_way_anova = ms_between / ms_err
 
-    F = ms_between / ms_err
-
-    print(ms_between, ms_err, grand_mean, ss_means, F)
-
-    stat_info = "<h3>One-way ANOVA</h3>"
     anova_list = [anova_dataset[anova_dataset['bin'] == b][bin_var] for b in bin_list]
     f_one_way_anova, p_one_way_anova = stats.f_oneway(*anova_list)
-    stat_info += f"One-way ANOVA results: <br/> F = {f_one_way_anova}, P = {p_one_way_anova}"
 
-    results = {'sum_sq': [ssqA, ssqB, ssqAxB, ssqWithin],
-               'df': [dfA, dfB, dfAxB, dfWithin],
-               'F': [fA, fB, fAxB, 'NaN'],
-               'PR(>F)': [pA, pB, pAxB, 'NaN']}
-    columns = ['sum_sq', 'df', 'F', 'PR(>F)']
+    results = {'sum_sq': [ss_groups, ss_err, ss_groups + ss_err],
+               'df': [df_groups, df_err, ''],
+               'F': [f_one_way_anova, '', ''],
+               'P': [p_one_way_anova, '', '']}
+    columns = ['sum_sq', 'df', 'F', 'P']
 
-    return pd.DataFrame(results, columns=columns,
-                        index=[parameter, 'bin',
-                               parameter + ':bin', 'Residual']), urllib.parse.quote(figdata_png)
+    anova_table = pd.DataFrame(results, columns=columns, index=['group', 'error', 'total'])
 
-
-    return stat_info
+    return anova_table
 
 
 def two_way_anova(statData, datasetA, datasetB, parameter, paramValueA, paramValueB, binVariable):

@@ -13,13 +13,12 @@ app.config.update(
     MAIL_PORT = 587,
     MAIL_USE_TLS = True,
     MAIL_USERNAME = 'barrozo.ah@gmail.com',
-    MAIL_PASSWORD = '7heLepper4ffinity',
+    MAIL_PASSWORD = '',
     MAIL_DEFAULT_SENDER = 'Alexandre Barrozo <barrozo.ah@gmail.com>')
 
 filename = None
 statData = None
-statFunc = None
+stat_func = None
 statParm = [{}, {}]
-dataset1 = None
-dataset2 = None
-parmNames = None
+parm_names = None
+info = {}

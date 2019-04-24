@@ -38,8 +38,8 @@ MathJax.Hub.Config({
 
 <p>
 Tools:
-<select name="selectfunc" style="width: 250px;">
-    <option value="{{ selectfunc }}">{{ selectfunc }}</option>
+<select name="stat_func" style="width: 250px;">
+    <option value="{{ stat_func }}">{{ stat_func }}</option>
 </select>
 </p>
 
@@ -48,13 +48,13 @@ Sample parameters:
 {% if parms|length == 0 %}
     <form method=post action="">
         <select name="parm1A">
-            {% for id in range(0, parmNames|length) %}
-                <option value="{{ parmNames[id] }}">{{ parmNames[id] }}</option>
+            {% for id in range(0, parm_names|length) %}
+                <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
             {% endfor %}
         </select>
         <select name="parm1B">
-            {% for id in range(0, parmNames|length) %}
-                <option value="{{ parmNames[id] }}">{{ parmNames[id] }}</option>
+            {% for id in range(0, parm_names|length) %}
+                <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
             {% endfor %}
         </select>
         <input type="submit" name="parms" value="Select">
@@ -69,13 +69,13 @@ Sample parameters:
         </select>
         <br/>
         <select name="value1A">
-            {% for id in range(0, parmValues[0]|length) %}
-                <option value="{{ parmValues[0][id] }}">{{ parmValues[0][id] }}</option>
+            {% for id in range(0, parm_values[0]|length) %}
+                <option value="{{ parm_values[0][id] }}">{{ parm_values[0][id] }}</option>
             {% endfor %}
         </select>
         <select name="value1B">
-            {% for id in range(0, parmValues[1]|length) %}
-                <option value="{{ parmValues[1][id] }}">{{ parmValues[1][id] }}</option>
+            {% for id in range(0, parm_values[1]|length) %}
+                <option value="{{ parm_values[1][id] }}">{{ parm_values[1][id] }}</option>
             {% endfor %}
         </select>
         <input type="submit" name="values" value="Setup Samples">
@@ -100,8 +100,8 @@ Sample parameters:
 <p>Statistical property:</p>
     <form method=post action="">
         <select name="statproperty">
-            {% for id in range(0, parmNames|length) %}
-                <option value="{{ parmNames[id] }}">{{ parmNames[id] }}</option>
+            {% for id in range(0, parm_names|length) %}
+                <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
             {% endfor %}
         </select>
         <input type="submit" name="getproperty" value="Compute">

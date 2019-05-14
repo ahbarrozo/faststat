@@ -1,13 +1,14 @@
 from flask import Flask, render_template, request, redirect, url_for
-from forms import ComputeForm, StatForm
+from forms import ComputeForm, StatForm, LoginForm, RegisterForm
 from db_models import db, User, Compute
 from flask_login import LoginManager, current_user, login_user, logout_user, login_required
-import sys, os, urllib
+import os
 from compute import check_outliers, display_stat_info, normality_tests, null_hypothesis_tests, one_way_anova, \
                     two_way_anova
 from app import app, statData, statParm, parm_names, info, stat_func
 from werkzeug.utils import secure_filename
 from dataparse import DataSet, readData
+from sqlalchemy import text
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -35,11 +36,7 @@ def reset_vars():
     global statData, statParm, info
 
     statData = None
-    info = {}
-    info['parms'] = []
-    info['values'] = []
-    info['parm_values'] = []
-    info['parm_names'] = []
+    info = {'parms': {}, 'values': [], 'parm_values': [], 'parm_names': []}
     statParm = [{}, {}]
     result = None
 
@@ -91,49 +88,63 @@ def index():
             template = choose_template(info['stat_func'])
             return render_template(template, form=form, user=user, parm_names=info['parm_names'],
                                    stat_func=info['stat_func'], parms=[])
+
         # Setup for simple statistical info display: one dataset
-        if info['stat_func'] == 'Statistical Info':
+        if info['stat_func'] in ['Statistical Info', 'One-way ANOVA']:
 
             # Choice of parameters used for filtering data
             if request.form.get('parms'):
-                info['parms'].append(request.form.get('parm1A'))
-                info['parms'].append(request.form.get('parm1B'))
-                info['parm_values'].append(list(set(statData[info['parms'][0]])))
-                info['parm_values'].append(list(set(statData[info['parms'][1]])))
+                parm_a = request.form.get('parmA')
+                parm_b = request.form.get('parmB')
+                info['parms'][parm_a] = 0
+                info['parms'][parm_b] = 0
+                info['parm_values'].append(list(set(statData[parm_a])))
+                info['parm_values'].append(list(set(statData[parm_b])))
+
                 return render_template("view_statinfo.html", form=form,
                                        user=user, parm_names=info['parm_names'],
-                                       stat_func=info['stat_func'], parms=info['parms'],
+                                       stat_func=info['stat_func'], parms=list(info['parms'].keys()),
                                        parm_values=info['parm_values'], statready=False)
 
             # Choice of values of parameters to include in dataset.
             elif request.form.get('values'):
-                info['values'].append(request.form.get('value1A'))
-                info['values'].append(request.form.get('value1B'))
+                parm_a = request.form.get('parmA')
+                parm_b = request.form.get('parmB')
+                value_a = request.form.get('valueA')
+                value_b = request.form.get('valueB')
+                info['parms'][parm_a] = value_a
+                info['parms'][parm_b] = value_b
 
                 # Converts values from str to int if they are numbers
-                for index in range(0, len(info['values'])):
-                    if info['values'][index].isdigit():
-                        info['values'][index] = int(info['values'][index])
-                statParm[0][request.form.get('parm1A')] = info['values'][0]
-                statParm[0][request.form.get('parm1B')] = info['values'][1]
+                for parm, value in info['parms'].items():
+                    if value.isdigit():
+                        info['parms'][parm] = int(value)
+
+                if info['stat_func'] == 'One-way ANOVA':
+                    info['parm_names'] = list(set([parm[:-6] for parm in info['parm_names'] if 'bin' in parm]))
 
                 return render_template("view_statinfo.html", form=form,
                                        user=user, parm_names=info['parm_names'],
-                                       stat_func=info['stat_func'], parms=info['parms'],
-                                       values=info['values'], statready=True)
+                                       stat_func=info['stat_func'], parms=list(info['parms'].keys()),
+                                       values=list(info['parms'].values()), statready=True)
 
             # Choice of property to perform statistics on, building dataset and getting results
             elif request.form.get('getproperty'):
                 info['statproperty'] = request.form.get('statproperty')
-                dataset1 = DataSet(statData, info['statproperty'], **statParm[0])
+
+                if info['stat_func'] == 'Statistical Info':
+                    dataset1 = DataSet(statData, info['statproperty'], **info['parms'])
+                    result = display_stat_info(dataset1)
+                else:
+                    dataset1 = DataSet(statData, 'Total ' + info['statproperty'], **info['parms'])
+                    result = one_way_anova(statData, dataset1, info['statproperty'])
+                    result = result.to_html()
 
                 if len(dataset1.data_frame()) < 2:
                     result = "Insufficient data for the chosen parameters <br/>"
                     return render_template("view_statinfo.html", form=form, user=user, result=result,
                                            parm_names=info['parm_names'], stat_func=info['stat_func'],
                                            parms=info['parms'], parm_values=info['parm_values'], statready=False)
-
-                result = display_stat_info(dataset1)
 
                 if user.is_authenticated:
                     object = Compute()
@@ -147,112 +158,68 @@ def index():
 
                 return render_template("view_output.html", form=form, result=result, plot=None, user=user)
 
-        if stat_func == 'One-way ANOVA':
-
-            # Choice of parameters used for filtering data
-            if request.form.get('parms'):
-
-                info['parms'].append(request.form.get('parm1A'))
-                info['parms'].append(request.form.get('parm1B'))
-                info['parm_values'].append(list(set(statData[info['parms'][0]])))
-                info['parm_values'].append(list(set(statData[info['parms'][1]])))
-                return render_template("view_owanova.html", form=form, user=user, parm_names=info['parm_names'],
-                                       stat_func=info['stat_func'], parms=info['parms'],
-                                       parm_values=info['parm_values'], statready=False)
-
-            # Choice of values of parameters to include in dataset.
-            elif request.form.get('values'):
-                info['values'].append(request.form.get('value1A'))
-                info['values'].append(request.form.get('value1B'))
-
-                # Converts values from str to int if they are numbers
-                for index in range(0, len(info['values'])):
-                    if info['values'][index].isdigit():
-                        info['values'][index] = int(info['values'][index])
-                statParm[0][request.form.get('parm1A')] = info['values'][0]
-                statParm[0][request.form.get('parm1B')] = info['values'][1]
-                info['parm_names'] = list(set([parm[:-6] for parm in info['parm_names'] if 'bin' in parm]))
-
-                return render_template("view_owanova.html", form=form,
-                                       user=user, parm_names=info['parm_names'],
-                                       stat_func=info['stat_func'], parms=info['parms'],
-                                       values=info['values'], statready=True)
-
-            # Choice of property to perform statistics on, building dataset and getting results
-            elif request.form.get('getproperty'):
-                info['statproperty'] = request.form.get('statproperty')
-                dataset1 = DataSet(statData, 'Total ' + info['statproperty'], **statParm[0])
-
-                if len(dataset1.data_frame()) < 2:
-                    result = "Insufficient data for the chosen parameters <br/>"
-                    return render_template("view_owanova.html", form=form,
-                                           user=user, result=result,
-                                           parm_names=info['parm_names'], stat_func=info['stat_func'],
-                                           parms=info['parms'], parm_values=info['parm_values'],
-                                           statready=False)
-
-                result = one_way_anova(statData, dataset1, info['statproperty'])
-                result = result.to_html()
-
-                if user.is_authenticated:
-                    object = Compute()
-                    form.populate_obj(object)
-                    object.result = result
-                    object.plot = plot
-                    object.user = user
-                    object.filename = filename
-                    db.session.add(object)
-                    db.session.commit()
-
-                return render_template("view_output.html", form=form, 
-                                       result=result, plot=None,
-                                       user=user)
-
         # Setup for statistical tools requiring two datasets
-        elif stat_func == 'Normality Tests' or stat_func == 'Null Hypothesis Tests' or stat_func == 'Two-way ANOVA':
+        elif info['stat_func'] in ['Normality Tests', 'Null Hypothesis Tests', 'Two-way ANOVA']:
 
             # Choice of parameters used for filtering data
             if request.form.get('parms'):
-                info['parms'].append(request.form.get('parm1A'))
-                info['parms'].append(request.form.get('parm1B'))
-                info['parms'].append(request.form.get('parm2A'))
-                info['parms'].append(request.form.get('parm2B'))
-                for i in range(0, len(info['parms'])):
-                    info['parm_values'].append(list(set(statData[info['parms'][i]])))
+                parm1_a = request.form.get('parm1A')
+                parm1_b = request.form.get('parm1B')
+                parm2_a = request.form.get('parm2A')
+                parm2_b = request.form.get('parm2B')
+                info['parms'] = [dict(), dict()]
+                info['parms'][0][parm1_a] = 0
+                info['parms'][0][parm1_b] = 0
+                info['parms'][1][parm2_a] = 0
+                info['parms'][1][parm2_b] = 0
+
+                info['parm_values'].append(list(set(statData[parm1_a])))
+                info['parm_values'].append(list(set(statData[parm1_b])))
+                info['parm_values'].append(list(set(statData[parm2_a])))
+                info['parm_values'].append(list(set(statData[parm2_b])))
+
                 return render_template("view_normtests.html", form=form,
                                        user=user, parm_names=info['parm_names'],
-                                       stat_func=info['stat_func'], parms=info['parms'],
+                                       stat_func=info['stat_func'],
+                                       parms=list(info['parms'][0].keys()) + list(info['parms'][1].keys()),
                                        parm_values=info['parm_values'], statready=False)
 
             # Choice of values of parameters to include in dataset.
             elif request.form.get('values'):
-                info['parms'].append(request.form.get('parm1A'))
-                info['parms'].append(request.form.get('parm1B'))
-                info['parms'].append(request.form.get('parm2A'))
-                info['parms'].append(request.form.get('parm2B'))
-                info['values'].append(request.form.get('value1A'))
-                info['values'].append(request.form.get('value1B'))
-                info['values'].append(request.form.get('value2A'))
-                info['values'].append(request.form.get('value2B'))
-                for index in range(0, len(info['values'])):
-                    if info['values'][index].isdigit():
-                        info['values'][index] = int(info['values'][index])
-                statParm[0][request.form.get('parm1A')] = info['values'][0]
-                statParm[0][request.form.get('parm1B')] = info['values'][1]
-                statParm[1][request.form.get('parm2A')] = info['values'][2]
-                statParm[1][request.form.get('parm2B')] = info['values'][3]
-                if stat_func == 'Two-way ANOVA':
+                parm1_a = request.form.get('parm1A')
+                parm1_b = request.form.get('parm1B')
+                parm2_a = request.form.get('parm2A')
+                parm2_b = request.form.get('parm2B')
+                value1_a = request.form.get('value1A')
+                value1_b = request.form.get('value1B')
+                value2_a = request.form.get('value2A')
+                value2_b = request.form.get('value2B')
+                info['parms'][0][parm1_a] = value1_a
+                info['parms'][0][parm1_b] = value1_b
+                info['parms'][1][parm2_a] = value2_a
+                info['parms'][1][parm2_b] = value2_b
+
+                # Converts values from str to int if they are numbers
+                for i in [0, 1]:
+                    for parm, value in info['parms'][i].items():
+                        if value.isdigit():
+                            info['parms'][i][parm] = int(value)
+
+                if info['stat_func'] == 'Two-way ANOVA':
                     info['parm_names'] = list(set([parm[:-6] for parm in info['parm_names'] if 'bin' in parm]))
-                return render_template("view_normtests.html", form=form, 
+
+                return render_template("view_normtests.html", form=form,
                                        user=user, parm_names=info['parm_names'],
-                                       stat_func=info['stat_func'], parms=info['parms'],
-                                       values=info['values'], statready=True)
+                                       stat_func=info['stat_func'],
+                                       parms=list(info['parms'][0].keys()) + list(info['parms'][1].keys()),
+                                       values=list(info['parms'][0].values()) + list(info['parms'][1].values()),
+                                       statready=True)
 
             elif request.form.get('getproperty'):
                 info['statproperty'] = request.form.get('statproperty')
-                if info['stat_func'] == 'Normality Tests' or info['stat_func'] == 'Null Hypothesis Tests':
-                    dataset1 = DataSet(statData, info['statproperty'], **statParm[0])
-                    dataset2 = DataSet(statData, info['statproperty'], **statParm[1])
+                if info['stat_func'] in ['Normality Tests', 'Null Hypothesis Tests']:
+                    dataset1 = DataSet(statData, info['statproperty'], **info['parms'][0])
+                    dataset2 = DataSet(statData, info['statproperty'], **info['parms'][1])
                     result = normality_tests(dataset1, dataset2)
                     result += display_stat_info(dataset1)
                     result += display_stat_info(dataset2)
@@ -260,41 +227,41 @@ def index():
                     if info['stat_func'] == 'Null Hypothesis Tests':
                         result += null_hypothesis_tests(dataset1, dataset2)
                 else:
-                    dataset1 = DataSet(statData, 'Total ' + info['statproperty'], **statParm[0])
-                    dataset2 = DataSet(statData, 'Total ' + info['statproperty'], **statParm[1])
-                    parm1A = request.form.get('parm1A')
-                    parm1B = request.form.get('parm1B')
-                    parm2A = request.form.get('parm2A')
-                    parm2B = request.form.get('parm2B')
-                    value1A = request.form.get('value1A')
-                    value1B = request.form.get('value1B')
-                    value2A = request.form.get('value2A')
-                    value2B = request.form.get('value2B')
+                    dataset1 = DataSet(statData, 'Total ' + info['statproperty'], **info['parms'][0])
+                    dataset2 = DataSet(statData, 'Total ' + info['statproperty'], **info['parms'][1])
+                    parm1_a = request.form.get('parm1A')
+                    parm1_b = request.form.get('parm1B')
+                    parm2_a = request.form.get('parm2A')
+                    parm2_b = request.form.get('parm2B')
+                    value1_a = request.form.get('value1A')
+                    value1_b = request.form.get('value1B')
+                    value2_a = request.form.get('value2A')
+                    value2_b = request.form.get('value2B')
 
-                    if parm1A == parm2A and value1A != value2A:
-                        valueA = value1A
-                        valueB = value2A
-                        parameter = parm1A
-                    elif parm1A == parm2B and value1A != value2B: 
-                        valueA = value1A
-                        valueB = value2B
-                        parameter = parm1A
-                    elif parm1B == parm2A and value1B != value2A:
-                        valueA = value1B
-                        valueB = value2A
-                        parameter = parm1B
-                    elif parm1B == parm2B and value1B != value2B:
-                        valueA = value1B
-                        valueB = value2B
-                        parameter = parm1B
+                    if parm1_a == parm2_a and value1_a != value2_a:
+                        value_a = value1_a
+                        value_b = value2_a
+                        parameter = parm1_a
+                    elif parm1_a == parm2_b and value1_a != value2_b:
+                        value_a = value1_a
+                        value_b = value2_b
+                        parameter = parm1_a
+                    elif parm1_b == parm2_a and value1_b != value2_a:
+                        value_a = value1_b
+                        value_b = value2_a
+                        parameter = parm1_b
+                    elif parm1_b == parm2_b and value1_b != value2_b:
+                        value_a = value1_b
+                        value_b = value2_b
+                        parameter = parm1_b
                     else:
-                        print("Cannot perform two-way ANOVA for these two datasets.")
-                        result = None
-                        return render_template("view.html", form=form, 
+                        result = "Cannot perform two-way ANOVA for these two datasets."
+
+                        return render_template("view.html", form=form,
                                                result=result, user=user)
                     
                     result, plot = two_way_anova(statData, dataset1, dataset2,
-                                                 parameter, valueA, valueB, info['statproperty'])
+                                                 parameter, value_a, value_b, info['statproperty'])
                     result = result.to_html()
 
                 if user.is_authenticated:
@@ -312,12 +279,7 @@ def index():
                                        plot=plot)
 
         elif request.form.get('reset'):
-            filename = None
-            statData = None
-            dataset1 = None
-            dataset2 = None
-            info = {}
-            result = None
+            reset_vars()
             return render_template("view.html", form=form, user=user)
 
     else:
@@ -335,7 +297,7 @@ def populate_form_from_instance(instance):
 
 
 def send_email(user):
-    from flask.ext.mail import Mail, Message
+    from flask_mail import Mail, Message
     mail = Mail(app)
     msg = Message("Compute Computations Complete",
                   recipients=[user.email])
@@ -357,8 +319,7 @@ unchecked.
 
 @app.route('/reg', methods=['GET', 'POST'])
 def create_login():
-    from forms import register_form
-    form = register_form(request.form)
+    form = RegisterForm(request.form)
     if request.method == 'POST' and form.validate():
         user = User()
         form.populate_obj(user)
@@ -373,8 +334,7 @@ def create_login():
 
 @app.route('/login', methods=['GET','POST'])
 def login():
-    from forms import login_form
-    form = login_form(request.form)
+    form = LoginForm(request.form)
     if request.method == 'POST' and form.validate():
         user = form.get_user()
         login_user(user)
@@ -393,7 +353,7 @@ def old():
     data = []
     user = current_user
     if user.is_authenticated:
-        instances = user.Compute.order_by('-id').all()
+        instances = user.Compute.order_by(text('-id')).all()
         for instance in instances:
             form = populate_form_from_instance(instance)
 
@@ -414,7 +374,7 @@ def old():
 def add_comment():
     user = current_user
     if request.method == 'POST' and user.is_authenticated:
-        instance = user.Compute.order_by('-id').first()
+        instance = user.Compute.order_by(text('-id')).first()
         instance.comments = request.form.get("comments",None)
         db.session.commit()
     return redirect(url_for('index'))

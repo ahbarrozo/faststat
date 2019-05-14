@@ -47,12 +47,12 @@ Sample parameters:
 
 {% if parms|length == 0 %}
     <form method=post action="">
-        <select name="parm1A">
+        <select name="parmA">
             {% for id in range(0, parm_names|length) %}
                 <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
             {% endfor %}
         </select>
-        <select name="parm1B">
+        <select name="parmB">
             {% for id in range(0, parm_names|length) %}
                 <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
             {% endfor %}
@@ -61,19 +61,19 @@ Sample parameters:
     </form>
 {% elif statready == false %}
     <form method=post action="">
-        <select name="parm1A">
+        <select name="parmA">
             <option value="{{ parms[0] }}">{{ parms[0] }}</option>
         </select>
-        <select name="parm1B">
+        <select name="parmB">
             <option value="{{ parms[1] }}">{{ parms[1] }}</option>
         </select>
         <br/>
-        <select name="value1A">
+        <select name="valueA">
             {% for id in range(0, parm_values[0]|length) %}
                 <option value="{{ parm_values[0][id] }}">{{ parm_values[0][id] }}</option>
             {% endfor %}
         </select>
-        <select name="value1B">
+        <select name="valueB">
             {% for id in range(0, parm_values[1]|length) %}
                 <option value="{{ parm_values[1][id] }}">{{ parm_values[1][id] }}</option>
             {% endfor %}
@@ -82,17 +82,17 @@ Sample parameters:
     </form>
 {% elif statready == true %}
     <br/>
-    <select name="parm1A">
+    <select name="parmA">
         <option value="{{ parms[0] }}">{{ parms[0] }}</option>
     </select>
-    <select name="parm1B">
+    <select name="parmB">
         <option value="{{ parms[1] }}">{{ parms[1] }}</option>
     </select>
     <br/>
-    <select name="value1A">
+    <select name="valueA">
         <option value="{{ values[0] }}">{{ values[0] }}</option>
     </select>
-    <select name="value1B">
+    <select name="valueB">
         <option value="{{ values[1] }}">{{ values[1] }}</option><br/>
     </select>
     <br/>

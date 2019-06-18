@@ -16,8 +16,7 @@ app.config.update(
     MAIL_DEFAULT_SENDER='Alexandre Barrozo <barrozo.ah@gmail.com>')
 
 filename = None
-statData = None
+data_frame = None
 stat_func = None
-statParm = [{}, {}]
 parm_names = None
 info = {}

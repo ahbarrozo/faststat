@@ -1,13 +1,13 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import render_template, request, redirect, url_for
 from forms import ComputeForm, StatForm, LoginForm, RegisterForm
 from db_models import db, User, Compute
 from flask_login import LoginManager, current_user, login_user, logout_user, login_required
 import os
-from compute import check_outliers, display_stat_info, normality_tests, null_hypothesis_tests, one_way_anova, \
+from compute import display_stat_info, normality_tests, null_hypothesis_tests, one_way_anova, \
                     two_way_anova
-from app import app, statData, statParm, parm_names, info, stat_func
+from app import app
 from werkzeug.utils import secure_filename
-from dataparse import DataSet, readData
+from dataparse import DataSet, read_data
 from sqlalchemy import text
 
 login_manager = LoginManager()
@@ -27,21 +27,28 @@ ALLOWED_EXTENSIONS = {'xls', 'xlsx'}
 
 
 def allowed_file(file_name):
-    """Does filename have the right extension?"""
+    """Function to check if file_name have the right extension.
+    :arg file_name: str containing file name (must be either xls or xlsx)
+    :return bool"""
     return '.' in file_name and file_name.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 
 def reset_vars():
-    """Set all variables used for analysis to None or empty lists"""
-    global statData, statParm, info
+    """Reset all global variables used to None or empty lists"""
+    global data_frame, info, template
 
-    statData = None
+    data_frame = None
     info = {'parms': {}, 'values': [], 'parm_values': [], 'parm_names': []}
-    statParm = [{}, {}]
     result = None
+    template = "view_input.html"
 
 
 def choose_template(func):
+    """Based on the input of the user, chooses the proper HTML template to
+    be rendered.
+    :arg func: str with name of statistical analysis name
+    :return str with HTML template name"""
+
     if func == 'Statistical Info' or func == 'One-way ANOVA':
         return "view_statinfo.html"
     elif func == 'Normality Tests' or func == 'Null Hypothesis Tests' or func == 'Two-way ANOVA':
@@ -57,7 +64,7 @@ def load_user(user_id):
 def index():
     user = current_user
     form = StatForm(request.form)
-    global filename, statData, statParm, stat_func, parm_names, info
+    global filename, data_frame, parm_names, info, template
     plot = None
     
     if request.method == 'POST':
@@ -69,7 +76,7 @@ def index():
             file = request.files[form.filename.name]
 
             if file and allowed_file(file.filename):
-                statData = readData(file)
+                data_frame = read_data(file)
 
                 # Make a valid version of filename for any file system
                 filename = secure_filename(file.filename)
@@ -77,10 +84,10 @@ def index():
                 file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
                 # Store names of all statistical parameters (first row of the spread sheet)
-                parm_names = statData.columns.values.tolist()
-                info['parm_names'] = statData.columns.values.tolist()
+                parm_names = data_frame.columns.values.tolist()
+                info['parm_names'] = data_frame.columns.values.tolist()
 
-            return render_template("view_input.html", form=form, user=user, filename=info['file_name'])
+            return render_template(template, form=form, user=user, filename=info['file_name'])
 
         # Choice of statistical analysis
         if request.form.get('stat_func'):
@@ -98,10 +105,10 @@ def index():
                 parm_b = request.form.get('parmB')
                 info['parms'][parm_a] = 0
                 info['parms'][parm_b] = 0
-                info['parm_values'].append(list(set(statData[parm_a])))
-                info['parm_values'].append(list(set(statData[parm_b])))
+                info['parm_values'].append(list(set(data_frame[parm_a])))
+                info['parm_values'].append(list(set(data_frame[parm_b])))
 
-                return render_template("view_statinfo.html", form=form,
+                return render_template(template, form=form,
                                        user=user, parm_names=info['parm_names'],
                                        stat_func=info['stat_func'], parms=list(info['parms'].keys()),
                                        parm_values=info['parm_values'], statready=False)
@@ -123,7 +130,7 @@ def index():
                 if info['stat_func'] == 'One-way ANOVA':
                     info['parm_names'] = list(set([parm[:-6] for parm in info['parm_names'] if 'bin' in parm]))
 
-                return render_template("view_statinfo.html", form=form,
+                return render_template(template, form=form,
                                        user=user, parm_names=info['parm_names'],
                                        stat_func=info['stat_func'], parms=list(info['parms'].keys()),
                                        values=list(info['parms'].values()), statready=True)
@@ -133,27 +140,27 @@ def index():
                 info['statproperty'] = request.form.get('statproperty')
 
                 if info['stat_func'] == 'Statistical Info':
-                    dataset1 = DataSet(statData, info['statproperty'], **info['parms'])
+                    dataset1 = DataSet(data_frame, info['statproperty'], **info['parms'])
                     result = display_stat_info(dataset1)
                 else:
-                    dataset1 = DataSet(statData, 'Total ' + info['statproperty'], **info['parms'])
-                    result = one_way_anova(statData, dataset1, info['statproperty'])
+                    dataset1 = DataSet(data_frame, 'Total ' + info['statproperty'], **info['parms'])
+                    result = one_way_anova(data_frame, dataset1, info['statproperty'])
                     result = result.to_html()
 
-                if len(dataset1.data_frame()) < 2:
+                if len(dataset1.data_frame) < 2:
                     result = "Insufficient data for the chosen parameters <br/>"
-                    return render_template("view_statinfo.html", form=form, user=user, result=result,
+                    return render_template(template, form=form, user=user, result=result,
                                            parm_names=info['parm_names'], stat_func=info['stat_func'],
                                            parms=info['parms'], parm_values=info['parm_values'], statready=False)
 
                 if user.is_authenticated:
-                    object = Compute()
-                    form.populate_obj(object)
-                    object.result = result
-                    object.plot = plot
-                    object.user = user
-                    object.filename = filename
-                    db.session.add(object)
+                    compute_results = Compute()
+                    form.populate_obj(compute_results)
+                    compute_results.result = result
+                    compute_results.plot = plot
+                    compute_results.user = user
+                    compute_results.filename = filename
+                    db.session.add(compute_results)
                     db.session.commit()
 
                 return render_template("view_output.html", form=form, result=result, plot=None, user=user)
@@ -173,12 +180,12 @@ def index():
                 info['parms'][1][parm2_a] = 0
                 info['parms'][1][parm2_b] = 0
 
-                info['parm_values'].append(list(set(statData[parm1_a])))
-                info['parm_values'].append(list(set(statData[parm1_b])))
-                info['parm_values'].append(list(set(statData[parm2_a])))
-                info['parm_values'].append(list(set(statData[parm2_b])))
+                info['parm_values'].append(list(set(data_frame[parm1_a])))
+                info['parm_values'].append(list(set(data_frame[parm1_b])))
+                info['parm_values'].append(list(set(data_frame[parm2_a])))
+                info['parm_values'].append(list(set(data_frame[parm2_b])))
 
-                return render_template("view_normtests.html", form=form,
+                return render_template(template, form=form,
                                        user=user, parm_names=info['parm_names'],
                                        stat_func=info['stat_func'],
                                        parms=list(info['parms'][0].keys()) + list(info['parms'][1].keys()),
@@ -208,7 +215,7 @@ def index():
                 if info['stat_func'] == 'Two-way ANOVA':
                     info['parm_names'] = list(set([parm[:-6] for parm in info['parm_names'] if 'bin' in parm]))
 
-                return render_template("view_normtests.html", form=form,
+                return render_template(template, form=form,
                                        user=user, parm_names=info['parm_names'],
                                        stat_func=info['stat_func'],
                                        parms=list(info['parms'][0].keys()) + list(info['parms'][1].keys()),
@@ -218,8 +225,8 @@ def index():
             elif request.form.get('getproperty'):
                 info['statproperty'] = request.form.get('statproperty')
                 if info['stat_func'] in ['Normality Tests', 'Null Hypothesis Tests']:
-                    dataset1 = DataSet(statData, info['statproperty'], **info['parms'][0])
-                    dataset2 = DataSet(statData, info['statproperty'], **info['parms'][1])
+                    dataset1 = DataSet(data_frame, info['statproperty'], **info['parms'][0])
+                    dataset2 = DataSet(data_frame, info['statproperty'], **info['parms'][1])
                     result = normality_tests(dataset1, dataset2)
                     result += display_stat_info(dataset1)
                     result += display_stat_info(dataset2)
@@ -227,8 +234,8 @@ def index():
                     if info['stat_func'] == 'Null Hypothesis Tests':
                         result += null_hypothesis_tests(dataset1, dataset2)
                 else:
-                    dataset1 = DataSet(statData, 'Total ' + info['statproperty'], **info['parms'][0])
-                    dataset2 = DataSet(statData, 'Total ' + info['statproperty'], **info['parms'][1])
+                    dataset1 = DataSet(data_frame, 'Total ' + info['statproperty'], **info['parms'][0])
+                    dataset2 = DataSet(data_frame, 'Total ' + info['statproperty'], **info['parms'][1])
                     parm1_a = request.form.get('parm1A')
                     parm1_b = request.form.get('parm1B')
                     parm2_a = request.form.get('parm2A')
@@ -260,18 +267,18 @@ def index():
                         return render_template("view.html", form=form,
                                                result=result, user=user)
                     
-                    result, plot = two_way_anova(statData, dataset1, dataset2,
+                    result, plot = two_way_anova(data_frame, dataset1, dataset2,
                                                  parameter, value_a, value_b, info['statproperty'])
                     result = result.to_html()
 
                 if user.is_authenticated:
-                    object = Compute()
-                    form.populate_obj(object)
-                    object.result = result
-                    object.plot = plot
-                    object.user = user
-                    object.filename = filename
-                    db.session.add(object)
+                    compute_results = Compute()
+                    form.populate_obj(compute_results)
+                    compute_results.result = result
+                    compute_results.plot = plot
+                    compute_results.user = user
+                    compute_results.filename = filename
+                    db.session.add(compute_results)
                     db.session.commit()
 
                 return render_template("view_output.html", form=form, 
@@ -283,7 +290,6 @@ def index():
             return render_template("view.html", form=form, user=user)
 
     else:
-        info['stat_func'] = None
         result = None
         return render_template("view.html", form=form, user=user)
 
@@ -332,7 +338,7 @@ def create_login():
         return redirect(url_for('index'))
     return render_template("reg.html", form=form)
 
-@app.route('/login', methods=['GET','POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm(request.form)
     if request.method == 'POST' and form.validate():
@@ -369,13 +375,13 @@ def old():
     return render_template("old.html", data=data)
 
 
-@app.route('/add_comment', methods=['GET','POST'])
+@app.route('/add_comment', methods=['GET', 'POST'])
 @login_required
 def add_comment():
     user = current_user
     if request.method == 'POST' and user.is_authenticated:
         instance = user.Compute.order_by(text('-id')).first()
-        instance.comments = request.form.get("comments",None)
+        instance.comments = request.form.get("comments", None)
         db.session.commit()
     return redirect(url_for('index'))
 

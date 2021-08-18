@@ -32,12 +32,15 @@ def filter_numeric_data(statData, parameter):
         return 1
 
     filterNaNData = statData[pd.notnull(statData[parameter])]     # filtering NaN data
-
+    dataSeries = pd.Series(filterNaNData[parameter])
+    dataSeries.reset_index(drop=True, inplace=True)               # index must be reset to work
     try:
-        data = pd.to_numeric(pd.Series(filterNaNData[parameter])) # conversion necessary to use Grubbs' test
+        data = pd.to_numeric(dataSeries) # conversion necessary to use Grubbs' test
     except ValueError:
         print("ERROR: Grubbs' test cannot be performed due to non-numeric data. Please check your data.")
         return 1
+    print(data)
+    print(grubbs.test(data,alpha=0.05))
     return grubbs.test(data, alpha=0.05) # Grubbs' test
     
 

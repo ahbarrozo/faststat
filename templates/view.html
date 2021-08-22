@@ -1,41 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="stylesheet" href="static/basic.css" type="text/css">
-    <title>FastStat app</title>
-  </head>
-  <body>
-
-<!-- <script type="text/x-mathjax-config">
-MathJax.Hub.Config({
-  TeX: {
-     equationNumbers: {  autoNumber: "AMS"  },
-     extensions: ["AMSmath.js", "AMSsymbols.js", "autobold.js", "color.js"]
-  }
-});
-</script>
-<script type="text/javascript" src=
-"http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
-</script> -->
-
-{% if user.is_anonymous %}
-  <p align="right"><a href="/login">Login</a>
-  / <a href="/reg">Register</a></p>
-{% else %}
-  <p align="right">Logged in as {{user.username}}<br>
-    <a href="/old">Previous simulations<a/><br>
-    <a href="/logout">Logout</a></p>
-{% endif %}
-
-<h1>FastStat: a tool to perform fast statistical analysis.</h1>
-<p>
-<!-- Input and Results are typeset as a two-column table -->
-<table>
-<tr>
-<td valign="top">
-<h2>Input:</h2>
-
+{% extends "layout.html" %}
+{% block analysis %}
 <form method=post action="" enctype=multipart/form-data>
 <table>
     {% for field in form %}
@@ -58,7 +22,6 @@ MathJax.Hub.Config({
 </form>
 </td>
 
-<td valign="top">
 <!--{% if result != None %}
 <h2>Results</h2>
     {% if not user.is_anonymous %}
@@ -69,8 +32,5 @@ MathJax.Hub.Config({
       </form>
       {% endif %}
 {% endif %} -->
-</td></tr>
-</table>
-</body>
-</html>
+{% endblock %}
 

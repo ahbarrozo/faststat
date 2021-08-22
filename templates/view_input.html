@@ -1,7 +1,5 @@
 {% extends "layout.html" %}
 {% block analysis %}
-<article class="media content-section">
-<div class="media-body">
     <form method=post action="" enctype=multipart/form-data>
     {% if filename != None %}
         <p>
@@ -24,6 +22,4 @@
     <form method=post action="">
         <input type="submit" name="reset" value="Reset">
     </form>
-</div>
-</article>
 {% endblock %}

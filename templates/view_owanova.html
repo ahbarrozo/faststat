@@ -1,0 +1,96 @@
+{% extends "layout.html" %}
+{% block analysis %}
+    <p>
+Tools:
+    <select name="selectfunc" style="width: 250px;">
+        <option value="{{ selectfunc }}">{{ selectfunc }}</option>
+    </select>
+    </p>
+
+    Sample parameters:
+
+    {% if parms|length == 0 %}
+        <form method=post action="">
+            <select name="parm1A">
+                {% for id in range(0, parmNames|length) %}
+                    <option value="{{ parmNames[id] }}">{{ parmNames[id] }}</option>
+                {% endfor %}
+            </select>
+            <select name="parm1B">
+                {% for id in range(0, parmNames|length) %}
+                    <option value="{{ parmNames[id] }}">{{ parmNames[id] }}</option>
+                {% endfor %}
+            </select>
+            <input type="submit" name="parms" value="Select">
+        </form>
+    {% elif statready == false %}
+        <form method=post action="">
+            <select name="parm1A">
+                <option value="{{ parms[0] }}">{{ parms[0] }}</option>
+            </select>
+            <select name="parm1B">
+                <option value="{{ parms[1] }}">{{ parms[1] }}</option>
+            </select>
+            <br/>
+            <select name="value1A">
+                {% for id in range(0, parmValues[0]|length) %}
+                    <option value="{{ parmValues[0][id] }}">{{ parmValues[0][id] }}</option>
+                {% endfor %}
+            </select>
+            <select name="value1B">
+                {% for id in range(0, 1) %}
+                <option value="all">all</option>
+                {% endfor %}
+            </select>
+            <input type="submit" name="values" value="Setup Samples">
+        </form>
+    {% elif statready == true %}
+        <br/>
+        <select name="parm1A">
+            <option value="{{ parms[0] }}">{{ parms[0] }}</option>
+        </select>
+        <select name="parm1B">
+            <option value="{{ parms[1] }}">{{ parms[1] }}</option>
+        </select>
+        <br/>
+        <select name="value1A">
+            <option value="{{ values[0] }}">{{ values[0] }}</option>
+        </select>
+        <select name="value1B">
+            <option value="{{ values[1] }}">{{ values[1] }}</option><br/>
+        </select>
+        <br/>
+
+    <p>Statistical property:</p>
+        <form method=post action="">
+            <select name="statproperty">
+                {% for id in range(0, parmNames|length) %}
+                    <option value="{{ parmNames[id] }}">{{ parmNames[id] }}</option>
+                {% endfor %}
+            </select>
+            <input type="submit" name="getproperty" value="Compute">
+        </form>
+    {% endif %}
+    <br/>
+    <br/>
+        <form method=post action="">
+            <input type="submit" name="reset" value="Reset">
+        </form>
+    </td>
+    </p>
+
+ 
+    <td valign="top">
+    {% if result != None %}
+        <p>
+        {{ result|safe }}
+        </p>
+        {% if not user.is_anonymous %}
+            <h3>Comments:</h3>
+            <form method="post" action="/add_comment">
+                <textarea name="comments" rows="4" cols="40"></textarea>
+                <p><input type="submit" value="Add">
+            </form>
+        {% endif %}
+    {% endif %}
+{% endblock %}

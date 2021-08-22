@@ -50,9 +50,9 @@ def choose_template(func):
     :return str with HTML template name"""
 
     if func == 'Statistical Info' or func == 'One-way ANOVA':
-        return "view_statinfo.html"
+        return "view_oneset_analysis.html"
     elif func == 'Normality Tests' or func == 'Null Hypothesis Tests' or func == 'Two-way ANOVA':
-        return "view_normtests.html"
+        return "view_twosets_analysis.html"
 
 
 @login_manager.user_loader

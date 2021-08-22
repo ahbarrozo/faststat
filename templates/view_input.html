@@ -1,69 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="stylesheet" href="static/basic.css" type="text/css">
-    <title>FastStat app</title>
-  </head>
-  <body>
-
-<!-- <script type="text/x-mathjax-config">
-MathJax.Hub.Config({
-  TeX: {
-     equationNumbers: {  autoNumber: "AMS"  },
-     extensions: ["AMSmath.js", "AMSsymbols.js", "autobold.js", "color.js"]
-  }
-});
-</script>
-<script type="text/javascript" src=
-"http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
-</script> -->
-
-{% if user.is_anonymous %}
-  <p align="right"><a href="/login">Login</a>
-  / <a href="/reg">Register</a></p>
-{% else %}
-  <p align="right">Logged in as {{user.username}}<br>
-    <a href="/old">Previous simulations<a/><br>
-    <a href="/logout">Logout</a></p>
-{% endif %}
-
-<h1>FastStat: a tool to perform fast statistical analysis.</h1>
-<p>
-<!-- Input and Results are typeset as a two-column table -->
-<table>
-<tr>
-<td valign="top">
-<h2>Input:</h2>
-
-<form method=post action="" enctype=multipart/form-data>
-{% if filename != None %}
-<p>
-Tools:
-<form method=post action="">
-<select name="stat_func" style="width: 250px;">
-    <option value="Statistical Info">Statistical Info</option>
-    <option value="Normality Tests">Normality Tests</option>
-    <option value="Null Hypothesis Tests">Null Hypothesis Tests</option>
-    <option value="One-way ANOVA">One-way ANOVA</option>
-    <option value="Two-way ANOVA">Two-way ANOVA</option>
-</select>
-<input type="submit" value="Select">
-</p>
-</form>
-{% endif %}
-</form>
-<br/>
-<br/>
+{% extends "layout.html" %}
+{% block analysis %}
+    <form method=post action="" enctype=multipart/form-data>
+    {% if filename != None %}
+        <p>
+        Tools:
+        <form method=post action="">
+        <select name="stat_func" style="width: 250px;">
+            <option value="Statistical Info">Statistical Info</option>
+            <option value="Normality Tests">Normality Tests</option>
+            <option value="Null Hypothesis Tests">Null Hypothesis Tests</option>
+            <option value="One-way ANOVA">One-way ANOVA</option>
+            <option value="Two-way ANOVA">Two-way ANOVA</option>
+        </select>
+        <input type="submit" value="Select">
+        </p>
+        </form>
+    {% endif %}
+    </form>
+    <br/>
+    <br/>
     <form method=post action="">
         <input type="submit" name="reset" value="Reset">
     </form>
-
-</td>
-
-<td valign="top">
-</td></tr>
-</table>
-</body>
-</html>
-
+{% endblock %}

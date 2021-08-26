@@ -1,35 +1,24 @@
-from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash, check_password_hash
-from app import app
+import os
+from flask_login import UserMixin
+from faststat import db, login_manager
 
-db = SQLAlchemy(app)
 
-class User(db.Model):
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+class User(db.Model, UserMixin):
     """SQLAlchemy model for users. Contains id, username, password hash, email and
     email notification."""
 
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True)
-    pwhash = db.Column(db.String())
-    email = db.Column(db.String(120), nullable=True)
+    username = db.Column(db.String(60), unique=True, nullable=False)
+    password = db.Column(db.String(60))
+    email = db.Column(db.String(120), nullable=False)
     notify = db.Column(db.Boolean())
 
     def __repr__(self):
-        return '<User %r>' % self.username
-
-    def check_password(self, pw):
-        return check_password_hash(self.pwhash, pw)
-
-    def set_password(self, pw):
-        self.pwhash = generate_password_hash(pw)
-
-    # Variables that must be declared to use flask_login library    
-    is_authenticated = True
-    is_anonymous = False
-    is_active = True
-
-    def get_id(self):
-        return self.id
+        return f"<User '{self.username}', '{self.email}'>"
 
 
 class Compute(db.Model):
@@ -40,7 +29,12 @@ class Compute(db.Model):
     filename = db.Column(db.String())
     result = db.Column(db.String())
     plot = db.Column(db.String())
-    comments = db.Column(db.String(), nullable=True)
+    comments = db.Column(db.Text, nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     user = db.relationship('User', backref=db.backref('Compute', lazy='dynamic'))
 
+    def __repr__(self):
+        return f"<Compute '{self.result}', '{self.plot}'>"
+
+if not os.path.isfile(os.path.join(os.path.dirname(__file__), 'faststat.db')):
+    db.create_all()

@@ -6,7 +6,8 @@ from statsmodels.graphics.factorplots import interaction_plot
 import statistics
 import matplotlib.pyplot as plt
 import pandas as pd
-from dataparse import bin_dataframe_generator, bins_subset, DataSet
+
+from faststat.dataparse import bin_dataframe_generator, bins_subset, DataSet
 
 
 def compute_mean_std(filename=None):

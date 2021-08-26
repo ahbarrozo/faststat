@@ -1,26 +1,16 @@
-from flask import render_template, request, redirect, url_for
-from forms import ComputeForm, StatForm, LoginForm, RegisterForm
-from db_models import db, User, Compute
-from flask_login import LoginManager, current_user, login_user, logout_user, login_required
 import os
-from compute import display_stat_info, normality_tests, null_hypothesis_tests, one_way_anova, \
-                    two_way_anova
-from app import app
-from werkzeug.utils import secure_filename
-from dataparse import DataSet, read_data
+from flask import render_template, request, redirect, url_for, flash
+
+from flask_login import current_user, login_user, logout_user, login_required
 from sqlalchemy import text
+from werkzeug.utils import secure_filename
 
-login_manager = LoginManager()
-login_manager.init_app(app)
-
-# Relative path of directory for uploaded files
-UPLOAD_DIR = 'uploads/'
-
-app.config['UPLOAD_FOLDER'] = UPLOAD_DIR
-app.secret_key = 'MySecretKey'
-
-if not os.path.isdir(UPLOAD_DIR):
-    os.mkdir(UPLOAD_DIR)
+from faststat import app, bcrypt, db
+from faststat.forms import ComputeForm, StatForm, LoginForm, RegisterForm
+from faststat.dataparse import DataSet, read_data
+from faststat.db_models import User, Compute
+from faststat.compute import display_stat_info, normality_tests, null_hypothesis_tests, one_way_anova, \
+                    two_way_anova
 
 # Allowed file types for file upload
 ALLOWED_EXTENSIONS = {'xls', 'xlsx'}
@@ -53,11 +43,6 @@ def choose_template(func):
         return "view_oneset_analysis.html"
     elif func == 'Normality Tests' or func == 'Null Hypothesis Tests' or func == 'Two-way ANOVA':
         return "view_twosets_analysis.html"
-
-
-@login_manager.user_loader
-def load_user(user_id):
-    return db.session.query(User).get(user_id)
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -324,28 +309,34 @@ unchecked.
 
 
 @app.route('/reg', methods=['GET', 'POST'])
-def create_login():
-    form = RegisterForm(request.form)
-    if request.method == 'POST' and form.validate():
-        user = User()
-        form.populate_obj(user)
-        user.set_password(form.password.data)
-
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    form = RegisterForm()
+    if form.validate_on_submit():
+        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+        user = User(username=form.username.data, email=form.email.data, password=hashed_password)
         db.session.add(user)
         db.session.commit()
+        flash('Your account has been created! You are now able to log in.', 'success')
+        return redirect(url_for('login'))
+    return render_template('reg.html', title='Register', form=form)
 
-        login_user(user)
-        return redirect(url_for('index'))
-    return render_template("reg.html", form=form)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    form = LoginForm(request.form)
-    if request.method == 'POST' and form.validate():
-        user = form.get_user()
-        login_user(user)
+    if current_user.is_authenticated:
         return redirect(url_for('index'))
-    return render_template("login.html", form=form)
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user and bcrypt.check_password_hash(user.password, form.password.data):
+            login_user(user, remember=form.remember.data)
+            return redirect(url_for('index'))
+        else:
+            flash('Login unsuccessful. Please check email and password', 'danger')
+    return render_template("login.html", title='Login', form=form)
+
 
 @app.route('/logout')
 @login_required
@@ -385,6 +376,7 @@ def add_comment():
         db.session.commit()
     return redirect(url_for('index'))
 
+
 @app.route('/delete/<id>', methods=['GET','POST'])
 @login_required
 def delete_post(id):
@@ -403,8 +395,3 @@ def delete_post(id):
         db.session.commit()
     return redirect(url_for('old'))
 
-
-if __name__ == '__main__':
-    if not os.path.isfile(os.path.join(os.path.dirname(__file__), 'sqlite.db')):
-        db.create_all()
-    app.run(debug=True)

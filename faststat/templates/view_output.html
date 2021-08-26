@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-{% block analysis %}
+{% block content %}
     <form method=post action="" enctype=multipart/form-data>
     <table>
         {% for field in form %}
@@ -38,4 +38,4 @@
             </form>
         {% endif %}
     {% endif %}
-{% endblock %}
+{% endblock content %}

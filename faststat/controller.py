@@ -307,6 +307,9 @@ unchecked.
 """
     mail.send(msg)
 
+@app.route("/about")
+def about():
+    return render_template('about.html', title='About')
 
 @app.route('/reg', methods=['GET', 'POST'])
 def register():

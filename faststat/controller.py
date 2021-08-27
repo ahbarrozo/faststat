@@ -20,7 +20,7 @@ def allowed_file(file_name):
     """Function to check if file_name have the right extension.
     :arg file_name: str containing file name (must be either xls or xlsx)
     :return bool"""
-    return '.' in file_name and file_name.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+    return file_name.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 
 def reset_vars():
@@ -47,20 +47,21 @@ def choose_template(func):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    user = current_user
-    form = StatForm(request.form)
+    form = StatForm()
     global filename, data_frame, parm_names, info, template
     plot = None
-    
+    parms = {}
+
     if request.method == 'POST':
 
         # Save uploaded file on server if it exists and is valid
-        if request.files:
+        if request.files and form.validate_on_submit():
+            file = request.files[form.filename.name]
             reset_vars()
             result = None
-            file = request.files[form.filename.name]
 
             if file and allowed_file(file.filename):
+                flash(f'File {file.filename} uploaded to the server.', 'success')
                 data_frame = read_data(file)
 
                 # Make a valid version of filename for any file system
@@ -72,13 +73,17 @@ def index():
                 parm_names = data_frame.columns.values.tolist()
                 info['parm_names'] = data_frame.columns.values.tolist()
 
-            return render_template(template, form=form, user=user, filename=info['file_name'])
+            else:
+                flash(f'Invalid file format.', 'danger')
+                return render_template("view.html", form=form)
+
+            return render_template("view_input.html", form=form, filename=info['file_name'])
 
         # Choice of statistical analysis
         if request.form.get('stat_func'):
             info['stat_func'] = request.form.get('stat_func')
             template = choose_template(info['stat_func'])
-            return render_template(template, form=form, user=user, parm_names=info['parm_names'],
+            return render_template(template, form=form, parm_names=info['parm_names'],
                                    stat_func=info['stat_func'], parms=[])
 
         # Setup for simple statistical info display: one dataset
@@ -86,39 +91,40 @@ def index():
 
             # Choice of parameters used for filtering data
             if request.form.get('parms'):
-                parm_a = request.form.get('parmA')
-                parm_b = request.form.get('parmB')
+                parm_a = request.form.get('parm_a')
+                parm_b = request.form.get('parm_b')
                 info['parms'][parm_a] = 0
                 info['parms'][parm_b] = 0
                 info['parm_values'].append(list(set(data_frame[parm_a])))
                 info['parm_values'].append(list(set(data_frame[parm_b])))
-
                 return render_template(template, form=form,
-                                       user=user, parm_names=info['parm_names'],
+                                       parm_names=info['parm_names'],
                                        stat_func=info['stat_func'], parms=list(info['parms'].keys()),
                                        parm_values=info['parm_values'], statready=False)
 
             # Choice of values of parameters to include in dataset.
             elif request.form.get('values'):
-                parm_a = request.form.get('parmA')
-                parm_b = request.form.get('parmB')
-                value_a = request.form.get('valueA')
-                value_b = request.form.get('valueB')
+
+                # From Python 3.7, we can access dict entries per order of insertion. This is used here.
+                parm_a = list(info['parms'])[0]
+                parm_b = list(info['parms'])[1]
+                value_a = request.form.get('value_a')
+                value_b = request.form.get('value_b')
                 info['parms'][parm_a] = value_a
                 info['parms'][parm_b] = value_b
-
                 # Converts values from str to int if they are numbers
                 for parm, value in info['parms'].items():
-                    if value.isdigit():
+                    if type(value) is not int and value.isdigit():
                         info['parms'][parm] = int(value)
 
                 if info['stat_func'] == 'One-way ANOVA':
                     info['parm_names'] = list(set([parm[:-6] for parm in info['parm_names'] if 'bin' in parm]))
 
                 return render_template(template, form=form,
-                                       user=user, parm_names=info['parm_names'],
+                                       parm_names=info['parm_names'],
                                        stat_func=info['stat_func'], parms=list(info['parms'].keys()),
                                        values=list(info['parms'].values()), statready=True)
+
 
             # Choice of property to perform statistics on, building dataset and getting results
             elif request.form.get('getproperty'):
@@ -134,11 +140,11 @@ def index():
 
                 if len(dataset1.data_frame) < 2:
                     result = "Insufficient data for the chosen parameters <br/>"
-                    return render_template(template, form=form, user=user, result=result,
+                    return render_template(template, form=form, result=result,
                                            parm_names=info['parm_names'], stat_func=info['stat_func'],
                                            parms=info['parms'], parm_values=info['parm_values'], statready=False)
 
-                if user.is_authenticated:
+                if current_user.is_authenticated:
                     compute_results = Compute()
                     form.populate_obj(compute_results)
                     compute_results.result = result
@@ -148,8 +154,8 @@ def index():
                     db.session.add(compute_results)
                     db.session.commit()
 
-                return render_template("view_output.html", form=form, result=result, plot=None, user=user)
-
+                return render_template("view_output.html", form=form, result=result, plot=None)
+            
         # Setup for statistical tools requiring two datasets
         elif info['stat_func'] in ['Normality Tests', 'Null Hypothesis Tests', 'Two-way ANOVA']:
 
@@ -171,13 +177,15 @@ def index():
                 info['parm_values'].append(list(set(data_frame[parm2_b])))
 
                 return render_template(template, form=form,
-                                       user=user, parm_names=info['parm_names'],
+                                       parm_names=info['parm_names'],
                                        stat_func=info['stat_func'],
                                        parms=list(info['parms'][0].keys()) + list(info['parms'][1].keys()),
                                        parm_values=info['parm_values'], statready=False)
 
             # Choice of values of parameters to include in dataset.
             elif request.form.get('values'):
+
+                # parm1_a = list(info['parms'])[0]
                 parm1_a = request.form.get('parm1A')
                 parm1_b = request.form.get('parm1B')
                 parm2_a = request.form.get('parm2A')
@@ -201,7 +209,7 @@ def index():
                     info['parm_names'] = list(set([parm[:-6] for parm in info['parm_names'] if 'bin' in parm]))
 
                 return render_template(template, form=form,
-                                       user=user, parm_names=info['parm_names'],
+                                       parm_names=info['parm_names'],
                                        stat_func=info['stat_func'],
                                        parms=list(info['parms'][0].keys()) + list(info['parms'][1].keys()),
                                        values=list(info['parms'][0].values()) + list(info['parms'][1].values()),
@@ -256,7 +264,7 @@ def index():
                                                  parameter, value_a, value_b, info['statproperty'])
                     result = result.to_html()
 
-                if user.is_authenticated:
+                if current_user.is_authenticated:
                     compute_results = Compute()
                     form.populate_obj(compute_results)
                     compute_results.result = result
@@ -267,16 +275,15 @@ def index():
                     db.session.commit()
 
                 return render_template("view_output.html", form=form, 
-                                       result=result, user=user,
-                                       plot=plot)
+                                       result=result, plot=plot)
 
         elif request.form.get('reset'):
             reset_vars()
-            return render_template("view.html", form=form, user=user)
+            return render_template("view.html", form=form)
 
     else:
         result = None
-        return render_template("view.html", form=form, user=user)
+        return render_template("view.html", form=form)
 
 
 def populate_form_from_instance(instance):
@@ -351,9 +358,8 @@ def logout():
 @login_required
 def old():
     data = []
-    user = current_user
-    if user.is_authenticated:
-        instances = user.Compute.order_by(text('-id')).all()
+    if current_user.is_authenticated:
+        instances = current_user.Compute.order_by(text('-id')).all()
         for instance in instances:
             form = populate_form_from_instance(instance)
 
@@ -372,8 +378,7 @@ def old():
 @app.route('/add_comment', methods=['GET', 'POST'])
 @login_required
 def add_comment():
-    user = current_user
-    if request.method == 'POST' and user.is_authenticated:
+    if request.method == 'POST' and current_user.is_authenticated:
         instance = user.Compute.order_by(text('-id')).first()
         instance.comments = request.form.get("comments", None)
         db.session.commit()
@@ -384,8 +389,7 @@ def add_comment():
 @login_required
 def delete_post(id):
     id = int(id)
-    user = current_user
-    if user.is_authenticated:
+    if current_user.is_authenticated:
         if id == -1:
             instances = user.Compute.delete()
         else:

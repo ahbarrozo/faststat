@@ -1,65 +1,64 @@
 {% extends "layout.html" %}
 {% block content %}
-    <p>
-    Tools:
-    <select name="stat_func" style="width: 250px;">
-        <option value="{{ stat_func }}">{{ stat_func }}</option>
-    </select>
-    </p>
+    <div class="input-group mb-3">
+      <div class="input-group-prepend">
+        <label class="input-group-text">FastStat Tools: {{ stat_func }}</label>
+      </div>
+    </div>
 
     Sample parameters:
 
     {% if parms|length == 0 %}
         <form method=post action="">
-            <select name="parmA">
+          <div class="input-group mb-3">
+            <select name="parm_a" id="parm_a" class="custom-select">
                 {% for id in range(0, parm_names|length) %}
                     <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
                 {% endfor %}
             </select>
-            <select name="parmB">
+            <select name="parm_b" id="parm_b" class="custom-select">
                 {% for id in range(0, parm_names|length) %}
                     <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
                 {% endfor %}
             </select>
-            <input type="submit" name="parms" value="Select">
+            <div class="input-group-append">
+              <button class="btn btn-outline-secondary" type="submit" value="parms" name="parms">Select</button>
+            </div>
+          </div>
         </form>
-    {% elif statready == false %}
+    {% else %}
+      {% if statready == false %}
+
+        <div class="input-group mb-3">
+          <div class="input-group-prepend">
+            <label class="input-group-text">{{ parms[0] }}, {{ parms[1] }}</label>
+          </div>
+        </div>
         <form method=post action="">
-            <select name="parmA">
-                <option value="{{ parms[0] }}">{{ parms[0] }}</option>
-            </select>
-            <select name="parmB">
-                <option value="{{ parms[1] }}">{{ parms[1] }}</option>
-            </select>
-            <br/>
-            <select name="valueA">
+          <div class="input-group mb-3">
+            <select name="value_a">
                 {% for id in range(0, parm_values[0]|length) %}
                     <option value="{{ parm_values[0][id] }}">{{ parm_values[0][id] }}</option>
                 {% endfor %}
             </select>
-            <select name="valueB">
+            <select name="value_b">
                 {% for id in range(0, parm_values[1]|length) %}
                     <option value="{{ parm_values[1][id] }}">{{ parm_values[1][id] }}</option>
                 {% endfor %}
             </select>
-            <input type="submit" name="values" value="Setup Samples">
+            <div class="input-group-append">
+              <button class="btn btn-outline-secondary" type="submit" name="values" value="values">Select</button>
+            </div>
+          </div>
         </form>
-    {% elif statready == true %}
+      {% else %}
         <br/>
-        <select name="parmA">
-            <option value="{{ parms[0] }}">{{ parms[0] }}</option>
-        </select>
-        <select name="parmB">
-            <option value="{{ parms[1] }}">{{ parms[1] }}</option>
-        </select>
-        <br/>
-        <select name="valueA">
-            <option value="{{ values[0] }}">{{ values[0] }}</option>
-        </select>
-        <select name="valueB">
-            <option value="{{ values[1] }}">{{ values[1] }}</option><br/>
-        </select>
-        <br/>
+
+        <div class="input-group mb-3">
+          <div class="input-group-prepend">
+            <label class="input-group-text">{{ parms[0] }}: {{ values[0] }}, {{ parms[1] }}: {{ values[1] }}</label>
+          </div>
+        </div>
 
     <p>Statistical property:</p>
         <form method=post action="">
@@ -70,6 +69,7 @@
             </select>
             <input type="submit" name="getproperty" value="Compute">
         </form>
+      {% endif %}
     {% endif %}
     <br/>
     <br/>
@@ -85,7 +85,7 @@
         <p>
         {{ result|safe }}
         </p>
-        {% if not user.is_anonymous %}
+        {% if not current_user.is_anonymous %}
             <h3>Comments:</h3>
             <form method="post" action="/add_comment">
                 <textarea name="comments" rows="4" cols="40"></textarea>

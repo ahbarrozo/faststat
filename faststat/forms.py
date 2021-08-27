@@ -1,7 +1,7 @@
 import wtforms as wtf
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField
-from wtforms.validators import DataRequired, EqualTo, Email, ValidationError
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, FileField
+from wtforms.validators import DataRequired, EqualTo, Email, ValidationError, InputRequired
 from faststat.db_models import db, User
 
 class ComputeForm(wtf.Form):
@@ -38,6 +38,6 @@ class LoginForm(FlaskForm):
         return db.session.query(User).filter_by(username=self.username.data).first()
 
 
-class StatForm(wtf.Form):
-    filename = wtf.FileField(validators=[wtf.validators.InputRequired()])
-
+class StatForm(FlaskForm):
+    filename = FileField(label='Spreadsheet', validators=[InputRequired()])
+    submit = SubmitField(label='Upload')

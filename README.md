@@ -4,7 +4,7 @@ This webapp allows users to input an Excel spreadsheet, and the app will parse t
 
 ### How to install  
 
-This code was developed in Python 3.8. However, it should work for any version above 3.6. To install all the packages required, simply run the following command in the `faststat` folder
+This code was developed in Python 3.8. However, it should work for any version above 3.6. To install all the required packages, simply run the following command in the `faststat` folder
 
 ``` 
 pip install -r requirements.txt
@@ -17,4 +17,4 @@ This webapp can be executed locally by running
 python run.py
 ```
 
-A URL will  be generated, and the user can paste it in any browser.
+A URL will be generated, which can be pasted in any browser.

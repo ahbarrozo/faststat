@@ -140,7 +140,7 @@
         <p>
         {{ result|safe }}
         </p>
-        {% if not user.is_anonymous %}
+        {% if not current_user.is_anonymous %}
             <h3>Comments:</h3>
             <form method="post" action="/add_comment">
                 <textarea name="comments" rows="4" cols="40"></textarea>

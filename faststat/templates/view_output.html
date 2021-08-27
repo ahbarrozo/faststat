@@ -30,7 +30,7 @@
         {% if plot != None %}
             <img src="data:image/png;base64,{{ plot }}" width="500">
         {% endif %}
-        {% if not user.is_anonymous %}
+        {% if not current_user.is_anonymous %}
             <h3>Comments:</h3>
             <form method="post" action="/add_comment">
             <textarea name="comments" rows="4" cols="40"></textarea>

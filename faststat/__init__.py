@@ -30,6 +30,7 @@ app.config.update(
     MAIL_PASSWORD='',
     MAIL_DEFAULT_SENDER='Alexandre Barrozo <barrozo.ah@gmail.com>')
 
+FILE = None
 filename = None
 data_frame = None
 stat_func = None

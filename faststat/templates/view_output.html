@@ -9,12 +9,22 @@
         {% endif %}
         {% if not current_user.is_anonymous %}
             <h3>Comments:</h3>
-            <form method="post" action="/add_comment">
+            <form method=post action="/add_comment">
             <textarea name="comments" rows="4" cols="40"></textarea>
             <p><input type="submit" value="Add">
             </form>
         {% endif %}
     {% endif %}
+
+    <br/>
+    <br/>
+        <form method=post action="/new_calc">
+            <input type="submit" name="reset" value="New calculation">
+        </form>
+    </td>
+    </p>
+
+
     <form method=post action="" enctype="multipart/form-data">
       {{ form.hidden_tag() }}
       <div class="form-group">

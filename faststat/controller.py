@@ -5,7 +5,7 @@ from flask_login import current_user, login_user, logout_user, login_required
 from sqlalchemy import text
 from werkzeug.utils import secure_filename
 
-from faststat import app, bcrypt, db
+from faststat import app, bcrypt, db, FILE, info
 from faststat.forms import ComputeForm, StatForm, LoginForm, RegisterForm
 from faststat.dataparse import DataSet, read_data
 from faststat.db_models import User, Compute
@@ -23,13 +23,15 @@ def allowed_file(file_name):
     return file_name.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 
-def reset_vars():
+def reset_vars(reset_file=False):
     """Reset all global variables used to None or empty lists"""
-    global data_frame, info, template
+    global data_frame, info, template, FILE
 
     data_frame = None
     info = {'parms': {}, 'values': [], 'parm_values': [], 'parm_names': []}
     result = None
+    if reset_file:
+        FILE = None
     template = "view_input.html"
 
 
@@ -48,25 +50,25 @@ def choose_template(func):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     form = StatForm()
-    global filename, data_frame, parm_names, info, template
+    global FILE, filename, data_frame, parm_names, info, template
     plot = None
     parms = {}
 
     if request.method == 'POST':
         # Save uploaded file on server if it exists and is valid
-        if form.validate_on_submit():
-            file = request.files[form.filename.name]
+        if form.validate_on_submit() and FILE == None:
+            FILE = request.files[form.filename.name]
             reset_vars()
             result = None
 
-            if file and allowed_file(file.filename):
-                flash(f'File {file.filename} uploaded to the server.', 'success')
-                data_frame = read_data(file)
+            if FILE and allowed_file(FILE.filename):
+                flash(f'File {FILE.filename} uploaded to the server.', 'success')
+                data_frame = read_data(FILE)
 
                 # Make a valid version of filename for any file system
-                filename = secure_filename(file.filename)
-                info['file_name'] = secure_filename(file.filename)
-                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                filename = secure_filename(FILE.filename)
+                info['file_name'] = secure_filename(FILE.filename)
+                FILE.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
                 # Store names of all statistical parameters (first row of the spread sheet)
                 parm_names = data_frame.columns.values.tolist()
@@ -148,7 +150,7 @@ def index():
                     form.populate_obj(compute_results)
                     compute_results.result = result
                     compute_results.plot = plot
-                    compute_results.user = user
+                    compute_results.user = current_user
                     compute_results.filename = filename
                     db.session.add(compute_results)
                     db.session.commit()
@@ -169,10 +171,6 @@ def index():
                 info['parms'][0][parm_1b] = 0
                 info['parms'][1][parm_2a] = 0
                 info['parms'][1][parm_2b] = 0
-
-                print(parm_1a, parm_1b)
-                print(parm_2a, parm_2b)
-
                 info['parm_values'].append(list(set(data_frame[parm_1a])))
                 info['parm_values'].append(list(set(data_frame[parm_1b])))
                 info['parm_values'].append(list(set(data_frame[parm_2a])))
@@ -269,7 +267,7 @@ def index():
                     form.populate_obj(compute_results)
                     compute_results.result = result
                     compute_results.plot = plot
-                    compute_results.user = user
+                    compute_results.user = current_user
                     compute_results.filename = filename
                     db.session.add(compute_results)
                     db.session.commit()
@@ -282,8 +280,14 @@ def index():
             return render_template("view.html", form=form)
 
     else:
-        result = None
-        return render_template("view.html", form=form)
+        if FILE != None:
+            filename = secure_filename(FILE.filename)
+            info['file_name'] = secure_filename(FILE.filename)
+            return render_template("view_input.html", form=form, filename=info['file_name'])
+
+        else:
+            result = None
+            return render_template("view.html", form=form)
 
 
 def populate_form_from_instance(instance):
@@ -348,6 +352,16 @@ def login():
     return render_template("login.html", title='Login', form=form)
 
 
+@app.route('/reset', methods=['GET', 'POST'])
+def reset():
+    reset_vars(reset_file=True)
+    return redirect(url_for('index'))
+
+@app.route('/new_calc', methods=['GET', 'POST'])
+def new_calc():
+    reset_vars()
+    return redirect(url_for('index'))
+
 @app.route('/logout')
 @login_required
 def logout():
@@ -379,10 +393,10 @@ def old():
 @login_required
 def add_comment():
     if request.method == 'POST' and current_user.is_authenticated:
-        instance = user.Compute.order_by(text('-id')).first()
+        instance = current_user.Compute.order_by(text('-id')).first()
         instance.comments = request.form.get("comments", None)
         db.session.commit()
-    return redirect(url_for('index'))
+    return redirect(url_for('old'))
 
 
 @app.route('/delete/<id>', methods=['GET','POST'])
@@ -391,10 +405,10 @@ def delete_post(id):
     id = int(id)
     if current_user.is_authenticated:
         if id == -1:
-            instances = user.Compute.delete()
+            instances = current_user.Compute.delete()
         else:
             try:
-                instance = user.Compute.filter_by(id=id).first()
+                instance = current_user.Compute.filter_by(id=id).first()
                 db.session.delete(instance)
             except:
                 pass

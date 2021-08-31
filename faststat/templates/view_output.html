@@ -1,28 +1,5 @@
 {% extends "layout.html" %}
 {% block content %}
-    <form method=post action="" enctype=multipart/form-data>
-    <table>
-        {% for field in form %}
-            <tr>
-            <td>{{ field.label }}</td>
-            <td>{{ field(size=20) }}</td>
-            <td>
-            {% if field.errors %}
-                <ul class=errors>
-                {% for error in field.errors %}
-                    <li>{{ error }}</li>
-                {% endfor %}</ul>
-            {% endif %}
-            </td></tr>
-        {% endfor %}
-    </table>
-    <p>
-    <input type="submit" value="Upload">
-    <input type="submit" name="reset" value="Reset">
-    </p>
-    </form>
-
-
     <td valign="top">
     <h2>Results:</h2>
     {% if result != None %}
@@ -38,4 +15,13 @@
             </form>
         {% endif %}
     {% endif %}
+    <form method=post action="" enctype="multipart/form-data">
+      {{ form.hidden_tag() }}
+      <div class="form-group">
+        {{ form.filename }}
+        </br>
+        {{ form.submit }}
+      </div>
+    </form>
 {% endblock content %}
+

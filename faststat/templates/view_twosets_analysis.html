@@ -1,141 +1,157 @@
 {% extends "layout.html" %}
 {% block content %}
-    <p>
-    Tools:
-    <select name="stat_func" style="width: 250px;">
-        <option value="{{ stat_func }}">{{ stat_func }}</option>
-    </select>
-    </p>
+    <div class="input-group mb-3">
+      <div class="input-group-prepend">
+        <label class="input-group-text">FastStat Tools: {{ stat_func }}</label>
+      </div>
+    </div>
 
     Sample parameters:
 
     {% if parms|length == 0 %}
         <form method=post action="">
-            <p> Dataset 1: </p>
-            <select name="parm1A">
-                {% for id in range(0, parm_names|length) %}
+          <div class="container">
+            <div class="panel panel-default">
+              <div class="panel-heading">Dataset 1:</div>
+              <div class="panel-body">
+                <select name="parm_1a" id="parm_1a" class="custom-select">
+                  {% for id in range(0, parm_names|length) %}
                     <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
-                {% endfor %}
-            </select>
-            <select name="parm1B">
-                {% for id in range(0, parm_names|length) %}
+                  {% endfor %}
+                </select>
+                <select name="parm_1b" id="parm_1b" class="custom-select">
+                  {% for id in range(0, parm_names|length) %}
                     <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
-                {% endfor %}
-            </select>
-            <br/>
-            <p> Dataset 2: </p>
-            <select name="parm2A">
-                {% for id in range(0, parm_names|length) %}
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="container">
+            <div class="panel panel-default">
+              <div class="panel-heading">Dataset 2:</div>
+              <div class="panel-body">
+                <select name="parm_2a" id="parm_2a" class="custom-select">
+                  {% for id in range(0, parm_names|length) %}
                     <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
-                {% endfor %}
-            </select>
-            <select name="parm2B">
-                {% for id in range(0, parm_names|length) %}
+                  {% endfor %}
+                </select>
+                <select name="parm_2b" id="parm_2b" class="custom-select">
+                  {% for id in range(0, parm_names|length) %}
                     <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
-                {% endfor %}
-            </select>
-
-            <input type="submit" name="parms" value="Select">
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="input-group-append">
+            <button class="btn btn-outline-secondary" type="submit" value=parms" name="parms">Select</button>
+          </div>
         </form>
-    {% elif statready == false %}
+    {% else %}
+      {% if statready == false %}
         <form method=post action="">
-            <p> Dataset 1: </p>
-            <select name="parm1A">
-                <option value="{{ parms[0] }}">{{ parms[0] }}</option>
-            </select>
-            <select name="parm1B">
-                <option value="{{ parms[1] }}">{{ parms[1] }}</option>
-            </select>
-            <br/>
-            <select name="value1A">
-                {% for id in range(0, parm_values[0]|length) %}
-                    <option value="{{ parm_values[0][id] }}">{{ parm_values[0][id] }}</option>
-                {% endfor %}
-            </select>
-            <select name="value1B">
-                {% for id in range(0, parm_values[1]|length) %}
-                    <option value="{{ parm_values[1][id] }}">{{ parm_values[1][id] }}</option>
-                {% endfor %}
-            </select>
-            <br/>
-            <p> Dataset 2: </p>
-            <select name="parm2A">
-                <option value="{{ parms[2] }}">{{ parms[2] }}</option>
-            </select>
-            <select name="parm2B">
-                <option value="{{ parms[3] }}">{{ parms[3] }}</option>
-            </select>
-            <br/>
-            <select name="value2A">
+        <div class="container">
+          <div class="panel panel-default">
+            <div class="panel-heading">Dataset 1:</div>
+            <div class="panel-body">
+              <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                  <label class="input-group-text">{{ parms[0] }}, {{ parms[1] }}</label>
+                </div>
+                  <select name="value_1a">
+                    {% for id in range(0, parm_values[0]|length) %}
+                      <option value="{{ parm_values[0][id] }}">{{ parm_values[0][id] }}</option>
+                    {% endfor %}
+                  </select>
+                  <select name="value_1b">
+                    {% for id in range(0, parm_values[1]|length) %}
+                      <option value="{{ parm_values[1][id] }}">{{ parm_values[1][id] }}</option>
+                    {% endfor %}
+                  </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="container">
+          <div class="panel panel-default">
+            <div class="panel-heading">Dataset 2:</div>
+            <div class="panel-body">
+            <div class="input-group mb-3">   
+              <div class="input-group-prepend">  
+                <label class="input-group-text">{{ parms[2] }}, {{ parms[3] }}</label>
+              </div>
+              <select name="value_2a">
                 {% for id in range(0, parm_values[2]|length) %}
                     <option value="{{ parm_values[2][id] }}">{{ parm_values[2][id] }}</option>
                 {% endfor %}
-            </select>
-            <select name="value2B">
+              </select>
+              <select name="value_2b">
                 {% for id in range(0, parm_values[3]|length) %}
                     <option value="{{ parm_values[3][id] }}">{{ parm_values[3][id] }}</option>
                 {% endfor %}
-            </select>
-            <input type="submit" name="values" value="Setup Samples">
+              </select>
+              <div class="input-group-append">
+                <button class="btn btn-outline-secondary" type="submit" name="values" value="values">Setup Samples</button>
+              </div>
+            </div>
+          </div>
+        </div>
         </form>
-    {% elif statready == true %}
-        <!--br/-->
-        <form method=post action="">
-        <p> Dataset 1: </p>
-        <select name="parm1A">
-            <option value="{{ parms[0] }}">{{ parms[0] }}</option>
-        </select>
-        <select name="parm1B">
-            <option value="{{ parms[1] }}">{{ parms[1] }}</option>
-        </select>
-        <br/>
-        <select name="value1A">
-            <option value="{{ values[0] }}">{{ values[0] }}</option>
-        </select>
-        <select name="value1B">
-            <option value="{{ values[1] }}">{{ values[1] }}</option><br/>
-        </select>
-        <br/>
-        <p> Dataset 2: </p>
-        <select name="parm2A">
-            <option value="{{ parms[2] }}">{{ parms[2] }}</option>
-        </select>
-        <select name="parm2B">
-            <option value="{{ parms[3] }}">{{ parms[3] }}</option>
-        </select>
-        <br/>
-        <select name="value2A">
-            <option value="{{ values[2] }}">{{ values[2] }}</option>
-        </select>
-        <select name="value2B">
-            <option value="{{ values[3] }}">{{ values[3] }}</option><br/>
-        </select>
-        <br/>
+      {% else %}
+        <div class="container">
+          <div class="panel panel-default">
+            <div class="panel-heading">Dataset 1:</div>
+            <div class="panel-body">
+            <div class="input-group mb-3">
+              <div class="input-group-prepend">
+                <label class="input-group-text">{{ parms[0] }}: {{ values[0] }}, {{ parms[1] }}: {{ values[1] }}</label>
+              </div>
+            </div>
+            </div>
+         </div>
+        </div>
+        
+       <div class="container">
+         <div class="panel panel-default">
+           <div class="panel-heading">Dataset 2:</div>
+           <div class="panel-body">
+           <div class="input-group mb-3">
+             <div class="input-group-prepend"> <div class="input-group mb-3">
+               <label class="input-group-text">{{ parms[2] }}: {{ values[2] }}, {{ parms[3] }}: {{ values[3] }}</label>
+             </div>
+           </div>
+           </div>
+         </div>
+       </div>        
 
-        <p> Statistical property: </p>
-        <!--form method=post action=""-->
-        <select name="statproperty">
-        {% for id in range(0, parm_names|length) %}
-            <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
-        {% endfor %}
-        </select>
-        <input type="submit" name="getproperty" value="Compute">
-        </form>
+
+       <form method=post action="">
+         <div class="container">
+           <div class="panel panel-default">
+             <div class="panel-heading">Statistical property:</div>
+             <div class="panel-body">
+               <div class="input-group mb-3">
+                 <select name="statproperty">
+                   {% for id in range(0, parm_names|length) %}
+                     <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
+                   {% endfor %}
+                 </select>
+                 <input type="submit" name="getproperty" value="Compute">
+               </div>
+             </div>
+           </div>
+         </div>
+       </form>
+      {% endif %}
     {% endif %}
-    <br/>
-    <br/>
-    <form method=post action="">
+    <div class="container">
+    
+      <form method=post action="">
         <input type="submit" name="reset" value="Reset">
-    </form>
+      </form>
+    </div>
 
-
-    </td>
-    </p>
-
-
- 
-
-    <td valign="top">
     {% if result != None %}
         <p>
         {{ result|safe }}

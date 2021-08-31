@@ -10,17 +10,24 @@
 
     {% if parms|length == 0 %}
         <form method=post action="">
-          <div class="input-group mb-3">
-            <select name="parm_a" id="parm_a" class="custom-select">
-                {% for id in range(0, parm_names|length) %}
-                    <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
-                {% endfor %}
-            </select>
-            <select name="parm_b" id="parm_b" class="custom-select">
-                {% for id in range(0, parm_names|length) %}
-                    <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
-                {% endfor %}
-            </select>
+          <div class="container">
+            <div class="panel panel-default">
+              <div class="panel-heading">Dataset:</div>
+              <div class="panel-body">
+                <div class="input-group mb-3">
+                  <select name="parm_a" id="parm_a" class="custom-select">
+                    {% for id in range(0, parm_names|length) %}
+                      <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
+                    {% endfor %}
+                  </select>
+                  <select name="parm_b" id="parm_b" class="custom-select">
+                    {% for id in range(0, parm_names|length) %}
+                      <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+            </div>
             <div class="input-group-append">
               <button class="btn btn-outline-secondary" type="submit" value="parms" name="parms">Select</button>
             </div>
@@ -28,13 +35,13 @@
         </form>
     {% else %}
       {% if statready == false %}
-
-        <div class="input-group mb-3">
-          <div class="input-group-prepend">
-            <label class="input-group-text">{{ parms[0] }}, {{ parms[1] }}</label>
+        <div class="container">
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <label class="input-group-text">{{ parms[0] }}, {{ parms[1] }}</label>
+            </div>
           </div>
-        </div>
-        <form method=post action="">
+          <form method=post action="">
           <div class="input-group mb-3">
             <select name="value_a">
                 {% for id in range(0, parm_values[0]|length) %}
@@ -51,24 +58,32 @@
             </div>
           </div>
         </form>
-      {% else %}
-        <br/>
-
-        <div class="input-group mb-3">
-          <div class="input-group-prepend">
-            <label class="input-group-text">{{ parms[0] }}: {{ values[0] }}, {{ parms[1] }}: {{ values[1] }}</label>
-          </div>
         </div>
+      {% else %}
+        <div class="container">
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <label class="input-group-text">{{ parms[0] }}: {{ values[0] }}, {{ parms[1] }}: {{ values[1] }}</label>
+            </div>
+          </div>
 
-    <p>Statistical property:</p>
-        <form method=post action="">
-            <select name="statproperty">
+    <form method=post action="">
+      <div class="container">
+        <div class="panel panel-default">
+          <div class="panel-heading">Statistical property:</div>
+          <div class="panel-body">
+            <div class="input-group mb-3">
+              <select name="statproperty">
                 {% for id in range(0, parm_names|length) %}
                     <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
                 {% endfor %}
             </select>
             <input type="submit" name="getproperty" value="Compute">
-        </form>
+          </div>
+        </div>
+      </div>
+    </form>
+
       {% endif %}
     {% endif %}
     <br/>

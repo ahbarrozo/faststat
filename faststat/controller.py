@@ -53,9 +53,8 @@ def index():
     parms = {}
 
     if request.method == 'POST':
-
         # Save uploaded file on server if it exists and is valid
-        if request.files and form.validate_on_submit():
+        if form.validate_on_submit():
             file = request.files[form.filename.name]
             reset_vars()
             result = None
@@ -161,20 +160,23 @@ def index():
 
             # Choice of parameters used for filtering data
             if request.form.get('parms'):
-                parm1_a = request.form.get('parm1A')
-                parm1_b = request.form.get('parm1B')
-                parm2_a = request.form.get('parm2A')
-                parm2_b = request.form.get('parm2B')
+                parm_1a = request.form.get('parm_1a')
+                parm_1b = request.form.get('parm_1b')
+                parm_2a = request.form.get('parm_2a')
+                parm_2b = request.form.get('parm_2b')
                 info['parms'] = [dict(), dict()]
-                info['parms'][0][parm1_a] = 0
-                info['parms'][0][parm1_b] = 0
-                info['parms'][1][parm2_a] = 0
-                info['parms'][1][parm2_b] = 0
+                info['parms'][0][parm_1a] = 0
+                info['parms'][0][parm_1b] = 0
+                info['parms'][1][parm_2a] = 0
+                info['parms'][1][parm_2b] = 0
 
-                info['parm_values'].append(list(set(data_frame[parm1_a])))
-                info['parm_values'].append(list(set(data_frame[parm1_b])))
-                info['parm_values'].append(list(set(data_frame[parm2_a])))
-                info['parm_values'].append(list(set(data_frame[parm2_b])))
+                print(parm_1a, parm_1b)
+                print(parm_2a, parm_2b)
+
+                info['parm_values'].append(list(set(data_frame[parm_1a])))
+                info['parm_values'].append(list(set(data_frame[parm_1b])))
+                info['parm_values'].append(list(set(data_frame[parm_2a])))
+                info['parm_values'].append(list(set(data_frame[parm_2b])))
 
                 return render_template(template, form=form,
                                        parm_names=info['parm_names'],
@@ -184,25 +186,23 @@ def index():
 
             # Choice of values of parameters to include in dataset.
             elif request.form.get('values'):
-
-                # parm1_a = list(info['parms'])[0]
-                parm1_a = request.form.get('parm1A')
-                parm1_b = request.form.get('parm1B')
-                parm2_a = request.form.get('parm2A')
-                parm2_b = request.form.get('parm2B')
-                value1_a = request.form.get('value1A')
-                value1_b = request.form.get('value1B')
-                value2_a = request.form.get('value2A')
-                value2_b = request.form.get('value2B')
-                info['parms'][0][parm1_a] = value1_a
-                info['parms'][0][parm1_b] = value1_b
-                info['parms'][1][parm2_a] = value2_a
-                info['parms'][1][parm2_b] = value2_b
+                parm_1a = list(info['parms'][0])[0]
+                parm_1b = list(info['parms'][0])[1]
+                parm_2a = list(info['parms'][1])[0]
+                parm_2b = list(info['parms'][1])[1]
+                value_1a = request.form.get('value_1a')
+                value_1b = request.form.get('value_1b')
+                value_2a = request.form.get('value_2a')
+                value_2b = request.form.get('value_2b')
+                info['parms'][0][parm_1a] = value_1a
+                info['parms'][0][parm_1b] = value_1b
+                info['parms'][1][parm_2a] = value_2a
+                info['parms'][1][parm_2b] = value_2b
 
                 # Converts values from str to int if they are numbers
                 for i in [0, 1]:
                     for parm, value in info['parms'][i].items():
-                        if value.isdigit():
+                        if type(value) is not int and value.isdigit():
                             info['parms'][i][parm] = int(value)
 
                 if info['stat_func'] == 'Two-way ANOVA':
@@ -229,36 +229,36 @@ def index():
                 else:
                     dataset1 = DataSet(data_frame, 'Total ' + info['statproperty'], **info['parms'][0])
                     dataset2 = DataSet(data_frame, 'Total ' + info['statproperty'], **info['parms'][1])
-                    parm1_a = request.form.get('parm1A')
-                    parm1_b = request.form.get('parm1B')
-                    parm2_a = request.form.get('parm2A')
-                    parm2_b = request.form.get('parm2B')
-                    value1_a = request.form.get('value1A')
-                    value1_b = request.form.get('value1B')
-                    value2_a = request.form.get('value2A')
-                    value2_b = request.form.get('value2B')
+                    parm_1a = list(info['parms'][0])[0]
+                    parm_1b = list(info['parms'][0])[1]
+                    parm_2a = list(info['parms'][1])[1]
+                    parm_2b = list(info['parms'][1])[1]                    
+                    value_1a = info['parms'][0][parm_1a]
+                    value_1b = info['parms'][0][parm_1b]
+                    value_2a = info['parms'][1][parm_2a]
+                    value_2b = info['parms'][1][parm_2b]
 
-                    if parm1_a == parm2_a and value1_a != value2_a:
-                        value_a = value1_a
-                        value_b = value2_a
+                    if parm_1a == parm_2a and value_1a != value_2a:
+                        value_a = value_1a
+                        value_b = value_2a
+                        parameter = parm_1a
+                    elif parm_1a == parm_2b and value_1a != value_2b:
+                        value_a = value_1a
+                        value_b = value_2b
                         parameter = parm1_a
-                    elif parm1_a == parm2_b and value1_a != value2_b:
-                        value_a = value1_a
-                        value_b = value2_b
-                        parameter = parm1_a
-                    elif parm1_b == parm2_a and value1_b != value2_a:
-                        value_a = value1_b
-                        value_b = value2_a
-                        parameter = parm1_b
-                    elif parm1_b == parm2_b and value1_b != value2_b:
-                        value_a = value1_b
-                        value_b = value2_b
-                        parameter = parm1_b
+                    elif parm_1b == parm_2a and value_1b != value_2a:
+                        value_a = value_1b
+                        value_b = value_2a
+                        parameter = parm_1b
+                    elif parm_1b == parm_2b and value_1b != value_2b:
+                        value_a = value_1b
+                        value_b = value_2b
+                        parameter = parm_1b
                     else:
                         result = "Cannot perform two-way ANOVA for these two datasets."
 
                         return render_template("view.html", form=form,
-                                               result=result, user=user)
+                                               result=result)
                     
                     result, plot = two_way_anova(data_frame, dataset1, dataset2,
                                                  parameter, value_a, value_b, info['statproperty'])

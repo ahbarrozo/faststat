@@ -34,7 +34,6 @@ FILE = None
 filename = None
 data_frame = None
 stat_func = None
-parm_names = None
 info = {}
 
 from faststat import controller

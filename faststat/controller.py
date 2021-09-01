@@ -5,7 +5,7 @@ from flask_login import current_user, login_user, logout_user, login_required
 from sqlalchemy import text
 from werkzeug.utils import secure_filename
 
-from faststat import app, bcrypt, db, FILE, info
+from faststat import app, bcrypt, data_frame, db, FILE, info
 from faststat.forms import ComputeForm, StatForm, LoginForm, RegisterForm
 from faststat.dataparse import DataSet, read_data
 from faststat.db_models import User, Compute
@@ -23,15 +23,21 @@ def allowed_file(file_name):
     return file_name.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 
-def reset_vars(reset_file=False):
+def reset_vars(hard_reset=False):
     """Reset all global variables used to None or empty lists"""
     global data_frame, info, template, FILE
 
-    data_frame = None
-    info = {'parms': {}, 'values': [], 'parm_values': [], 'parm_names': []}
+    info['parms'] = {} 
+    info['values'] = []
+    info['parm_values'] = []
+    info['parm_names'] = []
+    info['stat_func'] =  ''
     result = None
-    if reset_file:
-        FILE = None
+    if hard_reset:
+        data_frame = None
+        info = {'parms': {}, 'values': [], 'parm_values': [], 'parm_names': [],
+            'stat_func': ''}
+
     template = "view_input.html"
 
 
@@ -50,13 +56,12 @@ def choose_template(func):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     form = StatForm()
-    global FILE, filename, data_frame, parm_names, info, template
+    global FILE, filename, data_frame, info, template
     plot = None
-    parms = {}
 
     if request.method == 'POST':
         # Save uploaded file on server if it exists and is valid
-        if form.validate_on_submit() and FILE == None:
+        if form.validate_on_submit() and data_frame is None:
             FILE = request.files[form.filename.name]
             reset_vars()
             result = None
@@ -71,7 +76,6 @@ def index():
                 FILE.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
                 # Store names of all statistical parameters (first row of the spread sheet)
-                parm_names = data_frame.columns.values.tolist()
                 info['parm_names'] = data_frame.columns.values.tolist()
 
             else:
@@ -156,7 +160,7 @@ def index():
                     db.session.commit()
 
                 return render_template("view_output.html", form=form, result=result, plot=None)
-            
+
         # Setup for statistical tools requiring two datasets
         elif info['stat_func'] in ['Normality Tests', 'Null Hypothesis Tests', 'Two-way ANOVA']:
 
@@ -230,7 +234,7 @@ def index():
                     parm_1a = list(info['parms'][0])[0]
                     parm_1b = list(info['parms'][0])[1]
                     parm_2a = list(info['parms'][1])[1]
-                    parm_2b = list(info['parms'][1])[1]                    
+                    parm_2b = list(info['parms'][1])[1]
                     value_1a = info['parms'][0][parm_1a]
                     value_1b = info['parms'][0][parm_1b]
                     value_2a = info['parms'][1][parm_2a]
@@ -257,7 +261,7 @@ def index():
 
                         return render_template("view.html", form=form,
                                                result=result)
-                    
+
                     result, plot = two_way_anova(data_frame, dataset1, dataset2,
                                                  parameter, value_a, value_b, info['statproperty'])
                     result = result.to_html()
@@ -272,7 +276,7 @@ def index():
                     db.session.add(compute_results)
                     db.session.commit()
 
-                return render_template("view_output.html", form=form, 
+                return render_template("view_output.html", form=form,
                                        result=result, plot=plot)
 
         elif request.form.get('reset'):
@@ -280,9 +284,9 @@ def index():
             return render_template("view.html", form=form)
 
     else:
-        if FILE != None:
-            filename = secure_filename(FILE.filename)
-            info['file_name'] = secure_filename(FILE.filename)
+        if data_frame is not None:
+            info['parm_names'] = data_frame.columns.values.tolist()
+
             return render_template("view_input.html", form=form, filename=info['file_name'])
 
         else:
@@ -305,7 +309,7 @@ def send_email(user):
                   recipients=[user.email])
     msg.body = """
 A simulation has been completed by the Flask Compute app.
-Please log in at 
+Please log in at
 
 http://127.0.0.1:5000/login
 
@@ -313,7 +317,7 @@ to see the results.
 
 ---
 If you don't want email notifications when a result is found,
-please register a new user and leave the 'notify' field 
+please register a new user and leave the 'notify' field
 unchecked.
 """
     mail.send(msg)
@@ -354,7 +358,7 @@ def login():
 
 @app.route('/reset', methods=['GET', 'POST'])
 def reset():
-    reset_vars(reset_file=True)
+    reset_vars(hard_reset=True)
     return redirect(url_for('index'))
 
 @app.route('/new_calc', methods=['GET', 'POST'])
@@ -384,7 +388,7 @@ def old():
             else:
                 comments = ''
             data.append({'form': form, 'result': result,
-                         'id': instance.id, 'plot': plot, 
+                         'id': instance.id, 'plot': plot,
                          'comments': comments})
     return render_template("old.html", data=data)
 

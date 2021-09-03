@@ -1,11 +1,12 @@
 import os
-from flask import render_template, request, redirect, url_for, flash
+from flask import render_template, request, redirect, send_from_directory, url_for, flash
 
 from flask_login import current_user, login_user, logout_user, login_required
 from sqlalchemy import text
 from werkzeug.utils import secure_filename
+from pandas import DataFrame
 
-from faststat import app, bcrypt, data_frame, db, FILE, info
+from faststat import app, bcrypt, data_frame, db, info, UPLOAD_DIR
 from faststat.forms import ComputeForm, StatForm, LoginForm, RegisterForm
 from faststat.dataparse import DataSet, read_data
 from faststat.db_models import User, Compute
@@ -14,6 +15,21 @@ from faststat.compute import display_stat_info, normality_tests, null_hypothesis
 
 # Allowed file types for file upload
 ALLOWED_EXTENSIONS = {'xls', 'xlsx'}
+
+# HTML extension that will be added to a data frame converted to HTML format. 
+# Used for rendering
+HTML_EXT = """
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',
+    filename='basic.css') }}">
+
+    """
 
 
 def allowed_file(file_name):
@@ -25,7 +41,7 @@ def allowed_file(file_name):
 
 def reset_vars(hard_reset=False):
     """Reset all global variables used to None or empty lists"""
-    global data_frame, info, template, FILE
+    global data_frame, info, template
 
     info['parms'] = {} 
     info['values'] = []
@@ -56,40 +72,44 @@ def choose_template(func):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     form = StatForm()
-    global FILE, filename, data_frame, info, template
+    global filename, data_frame, info, template
     plot = None
 
     if request.method == 'POST':
         # Save uploaded file on server if it exists and is valid
-        if form.validate_on_submit() and data_frame is None:
+        if form.validate_on_submit(): 
             FILE = request.files[form.filename.name]
             reset_vars()
-            result = None
 
-            if FILE and allowed_file(FILE.filename):
-                flash(f'File {FILE.filename} uploaded to the server.', 'success')
+            if allowed_file(FILE.filename):
+                flash(f'File {FILE.filename} read by the server.', 'success')
                 data_frame = read_data(FILE)
 
                 # Make a valid version of filename for any file system
-                filename = secure_filename(FILE.filename)
                 info['file_name'] = secure_filename(FILE.filename)
-                FILE.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
                 # Store names of all statistical parameters (first row of the spread sheet)
                 info['parm_names'] = data_frame.columns.values.tolist()
 
             else:
                 flash(f'Invalid file format.', 'danger')
-                return render_template("view.html", form=form)
+                return render_template("view.html", 
+                                       form=form, 
+                                       filename=None)
 
-            return render_template("view_input.html", form=form, filename=info['file_name'])
+            return render_template("view_input.html", form=form,
+                                   filename=info['file_name'])
 
         # Choice of statistical analysis
         if request.form.get('stat_func'):
             info['stat_func'] = request.form.get('stat_func')
             template = choose_template(info['stat_func'])
-            return render_template(template, form=form, parm_names=info['parm_names'],
-                                   stat_func=info['stat_func'], parms=[])
+            return render_template(template, 
+                                   form=form, 
+                                   filename=info['file_name'],
+                                   parm_names=info['parm_names'],
+                                   stat_func=info['stat_func'], 
+                                   parms=[])
 
         # Setup for simple statistical info display: one dataset
         if info['stat_func'] in ['Statistical Info', 'One-way ANOVA']:
@@ -103,9 +123,12 @@ def index():
                 info['parm_values'].append(list(set(data_frame[parm_a])))
                 info['parm_values'].append(list(set(data_frame[parm_b])))
                 return render_template(template, form=form,
+                                       filename=info['file_name'],
                                        parm_names=info['parm_names'],
-                                       stat_func=info['stat_func'], parms=list(info['parms'].keys()),
-                                       parm_values=info['parm_values'], statready=False)
+                                       stat_func=info['stat_func'], 
+                                       parms=list(info['parms'].keys()),
+                                       parm_values=info['parm_values'], 
+                                       statready=False)
 
             # Choice of values of parameters to include in dataset.
             elif request.form.get('values'):
@@ -126,9 +149,12 @@ def index():
                     info['parm_names'] = list(set([parm[:-6] for parm in info['parm_names'] if 'bin' in parm]))
 
                 return render_template(template, form=form,
+                                       filename=info['file_name'],
                                        parm_names=info['parm_names'],
-                                       stat_func=info['stat_func'], parms=list(info['parms'].keys()),
-                                       values=list(info['parms'].values()), statready=True)
+                                       stat_func=info['stat_func'], 
+                                       parms=list(info['parms'].keys()),
+                                       values=list(info['parms'].values()), 
+                                       statready=True)
 
 
             # Choice of property to perform statistics on, building dataset and getting results
@@ -159,7 +185,10 @@ def index():
                     db.session.add(compute_results)
                     db.session.commit()
 
-                return render_template("view_output.html", form=form, result=result, plot=None)
+                return render_template("view_output.html", 
+                                       form=form, 
+                                       filename=info['file_name'],
+                                       result=result, plot=None)
 
         # Setup for statistical tools requiring two datasets
         elif info['stat_func'] in ['Normality Tests', 'Null Hypothesis Tests', 'Two-way ANOVA']:
@@ -180,11 +209,14 @@ def index():
                 info['parm_values'].append(list(set(data_frame[parm_2a])))
                 info['parm_values'].append(list(set(data_frame[parm_2b])))
 
-                return render_template(template, form=form,
+                return render_template(template, 
+                                       form=form,
+                                       filename=info['file_name'],
                                        parm_names=info['parm_names'],
                                        stat_func=info['stat_func'],
                                        parms=list(info['parms'][0].keys()) + list(info['parms'][1].keys()),
-                                       parm_values=info['parm_values'], statready=False)
+                                       parm_values=info['parm_values'], 
+                                       statready=False)
 
             # Choice of values of parameters to include in dataset.
             elif request.form.get('values'):
@@ -210,7 +242,9 @@ def index():
                 if info['stat_func'] == 'Two-way ANOVA':
                     info['parm_names'] = list(set([parm[:-6] for parm in info['parm_names'] if 'bin' in parm]))
 
-                return render_template(template, form=form,
+                return render_template(template, 
+                                       form=form,
+                                       filename=info['file_name'],
                                        parm_names=info['parm_names'],
                                        stat_func=info['stat_func'],
                                        parms=list(info['parms'][0].keys()) + list(info['parms'][1].keys()),
@@ -259,7 +293,9 @@ def index():
                     else:
                         result = "Cannot perform two-way ANOVA for these two datasets."
 
-                        return render_template("view.html", form=form,
+                        return render_template("view.html", 
+                                               form=form,
+                                               filename=None,
                                                result=result)
 
                     result, plot = two_way_anova(data_frame, dataset1, dataset2,
@@ -276,22 +312,31 @@ def index():
                     db.session.add(compute_results)
                     db.session.commit()
 
-                return render_template("view_output.html", form=form,
-                                       result=result, plot=plot)
+                return render_template("view_output.html", 
+                                       form=form,
+                                       filename=info['file_name'],
+                                       result=result, 
+                                       plot=plot)
 
         elif request.form.get('reset'):
             reset_vars()
-            return render_template("view.html", form=form)
+            return render_template("view.html", 
+                                   form=form,
+                                  filename=info['file_name'])
 
     else:
         if data_frame is not None:
             info['parm_names'] = data_frame.columns.values.tolist()
 
-            return render_template("view_input.html", form=form, filename=info['file_name'])
+            return render_template("view_input.html", 
+                                   form=form, 
+                                   filename=info['file_name'])
 
         else:
             result = None
-            return render_template("view.html", form=form)
+            return render_template("view.html", 
+                                   form=form,
+                                   filename=None)
 
 
 def populate_form_from_instance(instance):
@@ -365,6 +410,20 @@ def reset():
 def new_calc():
     reset_vars()
     return redirect(url_for('index'))
+
+@app.route('/get_df/<filename>')
+def get_df(filename):
+    global data_frame
+    html_form = data_frame.to_html()
+    html_form = html_form.replace('<table border="1" class="dataframe">', 
+                      '<table class="table table-striped">')
+    html_filepath = os.path.join(app.config['UPLOAD_FOLDER'],f"{filename}.html")
+    html_file = open(html_filepath, "w")
+    html_file.write(HTML_EXT)
+    html_file.write(html_form)
+    html_file.close()
+
+    return render_template(f'{UPLOAD_DIR}/{filename}.html')
 
 @app.route('/logout')
 @login_required

@@ -60,6 +60,7 @@
         </form>
         </div>
       {% else %}
+      <form method=post action="">
         <div class="container">
           <div class="input-group mb-3">
             <div class="input-group-prepend">
@@ -67,22 +68,21 @@
             </div>
           </div>
 
-    <form method=post action="">
-      <div class="container">
-        <div class="panel panel-default">
-          <div class="panel-heading">Statistical property:</div>
-          <div class="panel-body">
-            <div class="input-group mb-3">
-              <select name="statproperty">
-                {% for id in range(0, parm_names|length) %}
+          <div class="panel panel-default">
+            <div class="panel-heading">Statistical property:</div>
+            <div class="panel-body">
+              <div class="input-group mb-3">
+                <select name="statproperty">
+                  {% for id in range(0, parm_names|length) %}
                     <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
-                {% endfor %}
-            </select>
-            <input type="submit" name="getproperty" value="Compute">
+                  {% endfor %}
+                </select>
+                <input type="submit" name="getproperty" value="Compute">
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-    </form>
+	</div>
+      </form>
 
       {% endif %}
     {% endif %}

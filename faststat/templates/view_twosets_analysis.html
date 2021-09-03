@@ -51,14 +51,14 @@
     {% else %}
       {% if statready == false %}
         <form method=post action="">
-        <div class="container">
-          <div class="panel panel-default">
-            <div class="panel-heading">Dataset 1:</div>
-            <div class="panel-body">
-              <div class="input-group mb-3">
-                <div class="input-group-prepend">
-                  <label class="input-group-text">{{ parms[0] }}, {{ parms[1] }}</label>
-                </div>
+          <div class="container">
+            <div class="panel panel-default">
+              <div class="panel-heading">Dataset 1:</div>
+              <div class="panel-body">
+                <div class="input-group mb-3">
+                  <div class="input-group-prepend">
+                    <label class="input-group-text">{{ parms[0] }}, {{ parms[1] }}</label>
+                  </div>
                   <select name="value_1a">
                     {% for id in range(0, parm_values[0]|length) %}
                       <option value="{{ parm_values[0][id] }}">{{ parm_values[0][id] }}</option>
@@ -69,57 +69,58 @@
                       <option value="{{ parm_values[1][id] }}">{{ parm_values[1][id] }}</option>
                     {% endfor %}
                   </select>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div class="container">
-          <div class="panel panel-default">
-            <div class="panel-heading">Dataset 2:</div>
-            <div class="panel-body">
-            <div class="input-group mb-3">   
-              <div class="input-group-prepend">  
-                <label class="input-group-text">{{ parms[2] }}, {{ parms[3] }}</label>
-              </div>
-              <select name="value_2a">
-                {% for id in range(0, parm_values[2]|length) %}
-                    <option value="{{ parm_values[2][id] }}">{{ parm_values[2][id] }}</option>
-                {% endfor %}
-              </select>
-              <select name="value_2b">
-                {% for id in range(0, parm_values[3]|length) %}
-                    <option value="{{ parm_values[3][id] }}">{{ parm_values[3][id] }}</option>
-                {% endfor %}
-              </select>
-              <div class="input-group-append">
-                <button class="btn btn-outline-secondary" type="submit" name="values" value="values">Setup Samples</button>
+          <div class="container">
+            <div class="panel panel-default">
+              <div class="panel-heading">Dataset 2:</div>
+              <div class="panel-body">
+                <div class="input-group mb-3">   
+                  <div class="input-group-prepend">  
+                    <label class="input-group-text">{{ parms[2] }}, {{ parms[3] }}</label>
+                  </div>
+                  <select name="value_2a">
+                    {% for id in range(0, parm_values[2]|length) %}
+                      <option value="{{ parm_values[2][id] }}">{{ parm_values[2][id] }}</option>
+                    {% endfor %}
+                  </select>
+                  <select name="value_2b">
+                    {% for id in range(0, parm_values[3]|length) %}
+                      <option value="{{ parm_values[3][id] }}">{{ parm_values[3][id] }}</option>
+                    {% endfor %}
+                  </select>
+                  <div class="input-group-append">
+                    <button class="btn btn-outline-secondary" type="submit" name="values" value="values">Setup Samples</button>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+	  </div>
         </form>
       {% else %}
         <div class="container">
           <div class="panel panel-default">
             <div class="panel-heading">Dataset 1:</div>
             <div class="panel-body">
-            <div class="input-group mb-3">
-              <div class="input-group-prepend">
-                <label class="input-group-text">{{ parms[0] }}: {{ values[0] }}, {{ parms[1] }}: {{ values[1] }}</label>
+              <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                  <label class="input-group-text">{{ parms[0] }}: {{ values[0] }}, {{ parms[1] }}: {{ values[1] }}</label>
+                </div>
               </div>
             </div>
-            </div>
-         </div>
+          </div>
         </div>
         
        <div class="container">
          <div class="panel panel-default">
            <div class="panel-heading">Dataset 2:</div>
            <div class="panel-body">
-           <div class="input-group mb-3">
-             <div class="input-group-prepend"> <div class="input-group mb-3">
-               <label class="input-group-text">{{ parms[2] }}: {{ values[2] }}, {{ parms[3] }}: {{ values[3] }}</label>
-             </div>
+             <div class="input-group mb-3">
+               <div class="input-group-prepend"> <div class="input-group mb-3">
+                 <label class="input-group-text">{{ parms[2] }}: {{ values[2] }}, {{ parms[3] }}: {{ values[3] }}</label>
+               </div>
            </div>
            </div>
          </div>

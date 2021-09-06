@@ -1,12 +1,14 @@
 {% extends "layout.html" %}
 {% block content %}
-
-  <form method=post action="" enctype="multipart/form-data">
-    {{ form.hidden_tag() }}
-    <div class="form-group">
-      {{ form.filename }}
-      </br>
-      {{ form.submit }}
-    </div>
-  </form>
+  <div class="container">
+    <form method=post class="md-form" action="" enctype="multipart/form-data">
+      {{ form.hidden_tag() }}
+      <div class="form-group">      
+	{{ form.filename(class="btn btn-primary float-left") }}
+      </div>
+      <div class="form-group">
+        {{ form.submit(class="btn btn-outline-secondary") }}
+      </div>
+    </form>
+  </div>
 {% endblock content %}

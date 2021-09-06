@@ -28,37 +28,33 @@
                 </div>
               </div>
             </div>
-            <div class="input-group-append">
-              <button class="btn btn-outline-secondary" type="submit" value="parms" name="parms">Select</button>
-            </div>
+            <button class="btn btn-outline-secondary" type="submit" value="parms" name="parms">Select</button>
           </div>
         </form>
     {% else %}
       {% if statready == false %}
-        <div class="container">
-          <div class="input-group mb-3">
-            <div class="input-group-prepend">
-              <label class="input-group-text">{{ parms[0] }}, {{ parms[1] }}</label>
+        <form method=post action=""> 
+          <div class="container">
+            <div class="input-group mb-3">
+              <div class="input-group-prepend">
+                <label class="input-group-text">{{ parms[0] }}, {{ parms[1] }}</label>
+              </div>
             </div>
-          </div>
-          <form method=post action="">
-          <div class="input-group mb-3">
-            <select name="value_a">
+            <div class="input-group mb-3">
+              <select name="value_a">
                 {% for id in range(0, parm_values[0]|length) %}
-                    <option value="{{ parm_values[0][id] }}">{{ parm_values[0][id] }}</option>
+                  <option value="{{ parm_values[0][id] }}">{{ parm_values[0][id] }}</option>
                 {% endfor %}
-            </select>
-            <select name="value_b">
+              </select>
+              <select name="value_b">
                 {% for id in range(0, parm_values[1]|length) %}
-                    <option value="{{ parm_values[1][id] }}">{{ parm_values[1][id] }}</option>
+                  <option value="{{ parm_values[1][id] }}">{{ parm_values[1][id] }}</option>
                 {% endfor %}
-            </select>
-            <div class="input-group-append">
-              <button class="btn btn-outline-secondary" type="submit" name="values" value="values">Select</button>
-            </div>
+              </select>
+	    </div>
+            <button class="btn btn-outline-secondary" type="submit" name="values" value="values">Select</button>
           </div>
         </form>
-        </div>
       {% else %}
       <form method=post action="">
         <div class="container">
@@ -77,8 +73,8 @@
                     <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
                   {% endfor %}
                 </select>
-                <input type="submit" name="getproperty" value="Compute">
-              </div>
+	      </div>
+	      <button class="btn btn-outline-secondary" type="submit" name="getproperty" value="getproperty">Compute</button></button>
             </div>
           </div>
 	</div>
@@ -88,12 +84,12 @@
     {% endif %}
     <br/>
     <br/>
-        <form method=post action="/reset">
-            <input type="submit" name="reset" value="Reset">
-        </form>
-    </td>
-    </p>
 
+    <div class="container">
+      <form method=post action="/reset">
+	<button class="btn btn-danger" type="submit" name="reset" value="Reset">Reset</button>
+      </form>
+    </div>
  
     <td valign="top">
     {% if result != None %}
@@ -104,7 +100,8 @@
             <h3>Comments:</h3>
             <form method="post" action="/add_comment">
                 <textarea name="comments" rows="4" cols="40"></textarea>
-                <p><input type="submit" value="Add">
+		<br/><br/>
+		<button class="btn btn-outline-secondary" type="submit" name="addcomment" value="addcomment">Add comment</button>
             </form>
         {% endif %}
     {% endif %}

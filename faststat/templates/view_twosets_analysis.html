@@ -9,6 +9,7 @@
     Sample parameters:
 
     {% if parms|length == 0 %}
+      <div class="outer-container">
         <form method=post action="">
           <div class="container">
             <div class="panel panel-default">
@@ -43,13 +44,13 @@
                 </select>
               </div>
             </div>
-          </div>
-          <div class="input-group-append">
-            <button class="btn btn-outline-secondary" type="submit" value=parms" name="parms">Select</button>
-          </div>
+	  </div>
+          <button class="btn btn-outline-secondary" type="submit" value=parms" name="parms">Select</button>
         </form>
+      </div>
     {% else %}
       {% if statready == false %}
+      <div class="outer-container">
         <form method=post action="">
           <div class="container">
             <div class="panel panel-default">
@@ -91,15 +92,15 @@
                       <option value="{{ parm_values[3][id] }}">{{ parm_values[3][id] }}</option>
                     {% endfor %}
                   </select>
-                  <div class="input-group-append">
-                    <button class="btn btn-outline-secondary" type="submit" name="values" value="values">Setup Samples</button>
-                  </div>
                 </div>
               </div>
             </div>
 	  </div>
-        </form>
+	  <button class="btn btn-outline-secondary" type="submit" name="values" value="values">Setup Samples</button>
+          </form>
+	</div>
       {% else %}
+      <form method=post action="">
         <div class="container">
           <div class="panel panel-default">
             <div class="panel-heading">Dataset 1:</div>
@@ -113,43 +114,42 @@
           </div>
         </div>
         
-       <div class="container">
-         <div class="panel panel-default">
-           <div class="panel-heading">Dataset 2:</div>
-           <div class="panel-body">
-             <div class="input-group mb-3">
-               <div class="input-group-prepend"> <div class="input-group mb-3">
-                 <label class="input-group-text">{{ parms[2] }}: {{ values[2] }}, {{ parms[3] }}: {{ values[3] }}</label>
-               </div>
-           </div>
-           </div>
-         </div>
-       </div>        
+        <div class="container">
+          <div class="panel panel-default">
+            <div class="panel-heading">Dataset 2:</div>
+              <div class="panel-body">
+                <div class="input-group mb-3">
+                  <div class="input-group-prepend">
+                    <label class="input-group-text">{{ parms[2] }}: {{ values[2] }}, {{ parms[3] }}: {{ values[3] }}</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>        
 
 
-       <form method=post action="">
-         <div class="container">
-           <div class="panel panel-default">
-             <div class="panel-heading">Statistical property:</div>
-             <div class="panel-body">
-               <div class="input-group mb-3">
-                 <select name="statproperty">
-                   {% for id in range(0, parm_names|length) %}
-                     <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
-                   {% endfor %}
-                 </select>
-                 <input type="submit" name="getproperty" value="Compute">
-               </div>
-             </div>
-           </div>
-         </div>
-       </form>
+        <div class="container">
+          <div class="panel panel-default">
+            <div class="panel-heading">Statistical property:</div>
+            <div class="panel-body">
+              <div class="input-group mb-3">
+                <select name="statproperty">
+                  {% for id in range(0, parm_names|length) %}
+                    <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
+                  {% endfor %}
+                </select>
+	      </div>
+            </div>
+          </div>
+          <button class="btn btn-outline-secondary" type="submit" name="getproperty" value="getproperty">Compute</button>
+        </div>
+      </form>
       {% endif %}
     {% endif %}
+
     <div class="container">
-    
       <form method=post action="/reset">
-        <input type="submit" name="reset" value="Reset">
+	<button class="btn btn-danger" type="submit" name="reset" value="Reset">Reset</button>
       </form>
     </div>
 
@@ -161,7 +161,8 @@
             <h3>Comments:</h3>
             <form method="post" action="/add_comment">
                 <textarea name="comments" rows="4" cols="40"></textarea>
-                <p><input type="submit" value="Add">
+		<br/><br/>
+               <button class="btn btn-outline-secondary" type="submit" name="addcomment" value="Add">Add comment</button>
             </form>
         {% endif %}
     {% endif %}

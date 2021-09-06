@@ -1,37 +1,39 @@
 {% extends "layout.html" %}
 {% block content %}
-    <td valign="top">
-    <h2>Results:</h2>
-    {% if result != None %}
+    <div class="container">
+      <h2>Results:</h2>
+      {% if result != None %}
         <p>{{ result|safe }}</p>
         {% if plot != None %}
-            <img src="data:image/png;base64,{{ plot }}" width="500">
+          <img src="data:image/png;base64,{{ plot }}" width="500">
         {% endif %}
         {% if not current_user.is_anonymous %}
-            <h3>Comments:</h3>
-            <form method=post action="/add_comment">
-            <textarea name="comments" rows="4" cols="40"></textarea>
-            <p><input type="submit" value="Add">
-            </form>
+          <h3>Comments:</h3>
+          <form method=post action="/add_comment">
+          <textarea name="comments" rows="4" cols="40"></textarea>
+	  <br/><br/>
+	  <button class="btn btn-outline-secondary" type="submit" name="addcomment" value="addcomment">Add comment</button>
+          </form>
         {% endif %}
-    {% endif %}
-
+      {% endif %}
+    </div>
     <br/>
     <br/>
-        <form method=post action="/new_calc">
-            <input type="submit" name="reset" value="New calculation">
-        </form>
-    </td>
-    </p>
-
-
-    <form method=post action="" enctype="multipart/form-data">
-      {{ form.hidden_tag() }}
-      <div class="form-group">
-        {{ form.filename }}
-        </br>
-        {{ form.submit }}
-      </div>
-    </form>
+    <div class="container">
+      <form method=post action="/new_calc">
+        <button class="btn btn-outline-secondary" type="submit" name="reset" value="New calculation">New calculation</button>
+      </form>
+    </div>
+    <div class="container">
+      <form method=post action="" class="md-form" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        <div class="form-group">
+          {{ form.filename(class="btn btn-primary float-left") }}
+        </div>
+	<div class=form-group">
+          {{ form.submit(class="btn btn-outline-secondary") }}
+        </div>
+      </form>
+    </div>
 {% endblock content %}
 

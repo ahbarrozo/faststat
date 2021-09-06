@@ -181,7 +181,7 @@ def index():
                     compute_results.result = result
                     compute_results.plot = plot
                     compute_results.user = current_user
-                    compute_results.filename = filename
+                    compute_results.filename = info['file_name']
                     db.session.add(compute_results)
                     db.session.commit()
 
@@ -308,7 +308,7 @@ def index():
                     compute_results.result = result
                     compute_results.plot = plot
                     compute_results.user = current_user
-                    compute_results.filename = filename
+                    compute_results.filename = info['file_name']
                     db.session.add(compute_results)
                     db.session.commit()
 

@@ -43,8 +43,7 @@ def filter_numeric_data(data_frame, parameter):
 
     try:
         data = pd.to_numeric(data_series) # conversion necessary to use Grubbs' test
-#    try:
-#        data = pd.to_numeric(pd.Series(filter_nan[parameter]))  # conversion necessary to use Grubbs' test
+
     except ValueError:
         print("ERROR: Grubbs' test cannot be performed due to non-numeric data. Please check your data.")
         return 1
@@ -97,13 +96,17 @@ class DataSet:
         try:
             self._data_set = filter_numeric_data(self._data_frame, events)
         except ValueError:
+            self._data_set = pd.Series() # returns an empty seriees
             pass
         self._isnormal = True  # data is assumed to be normal.
         self._events = events
 
     @property
     def data_name(self):
-        return str(self._name) + " : " + str(self._data_set.name)        
+        if self._data_set.empty:
+            return ""
+        else:
+            return str(self._name) + " : " + str(self._data_set.name)
 
     @data_name.setter
     def data_name(self, name):

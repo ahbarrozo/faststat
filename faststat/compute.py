@@ -34,18 +34,23 @@ def display_stat_info(dataset):
     :arg dataset: DataSet type
     :return str"""
 
-    stat_info = "<h3>Statistical Info</h3> <br/>"
-    stat_info += f"Dataset: '{dataset.data_name}'<br />"
-    stat_info += f'No. of samples: {dataset.sampling_size()}<br />'
+    if dataset.data_set.empty:
+        return None
 
-    if dataset.isnormal():
-        stat_info += f'Mean: {dataset.mean_value()}<br />'
-        stat_info += f'Standard deviation: {dataset.std_value()}<br />'
-        stat_info += f'Standard error of the mean: {dataset.sem_value()}\n<br />'
     else:
-        stat_info += f'Median: {dataset.median_value()}<br />'
-        stat_info += f'Quantile 25%: {dataset.quantile25_value()}<br />'
-        stat_info += f'Quantile 75%: {dataset.quantile75_value()}\n<br />'
+
+        stat_info = "<h3>Statistical Info</h3> <br/>"
+        stat_info += f"Dataset: '{dataset.data_name}'<br />"
+        stat_info += f'No. of samples: {dataset.sampling_size()}<br />'
+
+        if dataset.isnormal():
+            stat_info += f'Mean: {dataset.mean_value()}<br />'
+            stat_info += f'Standard deviation: {dataset.std_value()}<br />'
+            stat_info += f'Standard error of the mean: {dataset.sem_value()}\n<br />'
+        else:
+            stat_info += f'Median: {dataset.median_value()}<br />'
+            stat_info += f'Quantile 25%: {dataset.quantile25_value()}<br />'
+            stat_info += f'Quantile 75%: {dataset.quantile75_value()}\n<br />'
 
     return stat_info
 

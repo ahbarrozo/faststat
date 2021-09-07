@@ -34,8 +34,8 @@ HTML_EXT = """
 
 def allowed_file(file_name):
     """Function to check if file_name have the right extension.
-    :arg file_name: str containing file name (must be either xls or xlsx)
-    :return bool"""
+:arg file_name: str containing file name (must be either xls or xlsx)
+:return bool"""
     return file_name.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 
@@ -169,11 +169,12 @@ def index():
                     result = one_way_anova(data_frame, dataset1, info['statproperty'])
                     result = result.to_html()
 
-                if len(dataset1.data_frame) < 2:
-                    result = "Insufficient data for the chosen parameters <br/>"
-                    return render_template(template, form=form, result=result,
-                                           parm_names=info['parm_names'], stat_func=info['stat_func'],
-                                           parms=info['parms'], parm_values=info['parm_values'], statready=False)
+                if dataset1.data_set.empty or len(dataset1.data_set) < 2:
+                    flash('Insufficient data. Please check your input \
+                          variaibles or spreadsheet', 'danger')
+
+                    reset_vars(hard_reset=True)
+                    return redirect(url_for('index'))
 
                 if current_user.is_authenticated:
                     compute_results = Compute()
@@ -256,6 +257,23 @@ def index():
                 if info['stat_func'] in ['Normality Tests', 'Null Hypothesis Tests']:
                     dataset1 = DataSet(data_frame, info['statproperty'], **info['parms'][0])
                     dataset2 = DataSet(data_frame, info['statproperty'], **info['parms'][1])
+
+                    """Check size of data sets to ensure it is possible to
+                    perform analysis."""
+                    if dataset1.data_set.empty or len(dataset1.data_set) < 2:
+                        flash('Insufficient data for Dataset 1. Please check your input \
+                              variaibles or spreadsheet', 'danger')
+
+                        reset_vars(hard_reset=True)
+                        return redirect(url_for('index'))
+
+                    if dataset2.data_set.empty or len(dataset2.data_set) < 2:
+                        flash('Insufficient data for Dataset 2. Please check your input \
+                              variaibles or spreadsheet', 'danger')
+
+                        reset_vars(hard_reset=True)
+                        return redirect(url_for('index'))
+
                     result = normality_tests(dataset1, dataset2)
                     result += display_stat_info(dataset1)
                     result += display_stat_info(dataset2)
@@ -265,6 +283,23 @@ def index():
                 else:
                     dataset1 = DataSet(data_frame, 'Total ' + info['statproperty'], **info['parms'][0])
                     dataset2 = DataSet(data_frame, 'Total ' + info['statproperty'], **info['parms'][1])
+
+                    """Check size of data sets to ensure it is possible to
+                    perform analysis."""
+                    if dataset1.data_set.empty or len(dataset1.data_set) < 2:
+                        flash('Insufficient data for Dataset 1. Please check your input \
+                              variaibles or spreadsheet', 'danger')
+
+                        reset_vars(hard_reset=True)
+                        return redirect(url_for('index'))
+
+                    if dataset2.data_set.empty or len(dataset2.data_set) < 2:
+                        flash('Insufficient data for Dataset 2. Please check your input \
+                              variaibles or spreadsheet', 'danger')
+
+                        reset_vars(hard_reset=True)
+                        return redirect(url_for('index'))
+
                     parm_1a = list(info['parms'][0])[0]
                     parm_1b = list(info['parms'][0])[1]
                     parm_2a = list(info['parms'][1])[1]
@@ -291,12 +326,11 @@ def index():
                         value_b = value_2b
                         parameter = parm_1b
                     else:
-                        result = "Cannot perform two-way ANOVA for these two datasets."
+                        flash('Cannot perform two-way ANOVA for these \
+                              two datasets', 'danger')
+                        reset_vars(hard_reset=True)
 
-                        return render_template("view.html", 
-                                               form=form,
-                                               filename=None,
-                                               result=result)
+                        return redirect(url_for('index'))
 
                     result, plot = two_way_anova(data_frame, dataset1, dataset2,
                                                  parameter, value_a, value_b, info['statproperty'])

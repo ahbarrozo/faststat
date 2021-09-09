@@ -14,18 +14,18 @@
             <div class="panel panel-default">
               <div class="panel-heading">Dataset:</div>
               <div class="panel-body">
-                <div class="input-group mb-3">
-                  <select name="parm_a" id="parm_a" class="custom-select">
+                  <select name="parm_a" id="parm_a" class="form-select">
+	            <option hidden>Choose a column...</option></option>
                     {% for id in range(0, parm_names|length) %}
                       <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
                     {% endfor %}
                   </select>
-                  <select name="parm_b" id="parm_b" class="custom-select">
+                  <select name="parm_b" id="parm_b" class="form-select">
+	            <option hidden>Choose a column...</option>
                     {% for id in range(0, parm_names|length) %}
                       <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
                     {% endfor %}
                   </select>
-                </div>
               </div>
             </div>
             <button class="btn btn-outline-secondary" type="submit" value="parms" name="parms">Select</button>
@@ -35,29 +35,29 @@
       {% if statready == false %}
         <form method=post action=""> 
           <div class="container">
-            <div class="input-group mb-3">
-              <div class="input-group-prepend">
-                <label class="input-group-text">{{ parms[0] }}, {{ parms[1] }}</label>
-              </div>
-            </div>
-            <div class="input-group mb-3">
-              <select name="value_a">
-                {% for id in range(0, parm_values[0]|length) %}
-                  <option value="{{ parm_values[0][id] }}">{{ parm_values[0][id] }}</option>
-                {% endfor %}
-              </select>
-              <select name="value_b">
-                {% for id in range(0, parm_values[1]|length) %}
-                  <option value="{{ parm_values[1][id] }}">{{ parm_values[1][id] }}</option>
-                {% endfor %}
-              </select>
+            <div class="panel panel-default">
+	      <div class="panel-heading">Dataset:</div>
+              <div class="panel-body">
+                <select name="value_a" id="value_a" class="form-select">
+		  <option hidden>Choose {{ parms[0] }}</option>
+                  {% for id in range(0, parm_values[0]|length) %}
+                    <option value="{{ parm_values[0][id] }}">{{ parm_values[0][id] }}</option>
+                  {% endfor %}
+                </select>
+                <select name="value_b" id="value_b" class="form-select">
+		  <option hidden>Choose {{ parms[1] }}</option>
+                  {% for id in range(0, parm_values[1]|length) %}
+                    <option value="{{ parm_values[1][id] }}">{{ parm_values[1][id] }}</option>
+                  {% endfor %}
+                </select>
+	      </div>
 	    </div>
             <button class="btn btn-outline-secondary" type="submit" name="values" value="values">Select</button>
           </div>
         </form>
       {% else %}
-      <form method=post action="">
-        <div class="container">
+      <div class="container">
+        <form method=post action="">
           <div class="input-group mb-3">
             <div class="input-group-prepend">
               <label class="input-group-text">{{ parms[0] }}: {{ values[0] }}, {{ parms[1] }}: {{ values[1] }}</label>
@@ -67,18 +67,17 @@
           <div class="panel panel-default">
             <div class="panel-heading">Statistical property:</div>
             <div class="panel-body">
-              <div class="input-group mb-3">
-                <select name="statproperty">
+                <select name="statproperty" id="statproperty" class="form-select">
+		  <option hidden>Choose an observable...</option></option>
                   {% for id in range(0, parm_names|length) %}
                     <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
                   {% endfor %}
                 </select>
-	      </div>
+	    </div>
 	      <button class="btn btn-outline-secondary" type="submit" name="getproperty" value="getproperty">Compute</button></button>
-            </div>
           </div>
-	</div>
-      </form>
+        </form>
+      </div>
 
       {% endif %}
     {% endif %}

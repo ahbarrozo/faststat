@@ -39,5 +39,5 @@ class LoginForm(FlaskForm):
 
 
 class StatForm(FlaskForm):
-    filename = FileField(label='Spreadsheet', validators=[InputRequired()])
-    submit = SubmitField(label='Upload')
+    filename = FileField(label='Spreadsheet', validators=[InputRequired()], 
+                         render_kw={"onchange": "form.submit()"})

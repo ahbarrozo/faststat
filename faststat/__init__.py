@@ -36,6 +36,5 @@ app.config.update(
 
 filename = None
 data_frame = None
-info = {}
 
 from faststat import controller

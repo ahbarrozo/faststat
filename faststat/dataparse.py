@@ -22,7 +22,7 @@ def read_data(input_file):
                 renamed_columns[i-bin_count+1] += ' bin 1'
         else:
             bin_count = 1
-          
+    print(renamed_columns)      
     return pd.DataFrame(input_data.values, columns=pd.Index(renamed_columns))
 
 
@@ -32,10 +32,9 @@ def filter_numeric_data(data_frame, parameter):
     :arg data_frame: pd.DataFrame to be parsed
     :arg parameter: name of parameter to be checked
     :return result from Grubbs' test, telling about outliers removed"""
- 
+
     if parameter not in data_frame.columns:
-        print("ERROR: Could not find parameter named {}.".format(parameter))
-        return 1
+        raise AttributeError(f"Could not find {parameter} in data frame.")
 
     filter_nan = data_frame[pd.notnull(data_frame[parameter])]     # filtering NaN data
     data_series = pd.Series(filter_nan[parameter])
@@ -45,9 +44,18 @@ def filter_numeric_data(data_frame, parameter):
         data = pd.to_numeric(data_series) # conversion necessary to use Grubbs' test
 
     except ValueError:
-        print("ERROR: Grubbs' test cannot be performed due to non-numeric data. Please check your data.")
-        return 1
-    return grubbs.test(data, alpha=0.05)  # Grubbs' test
+        raise ValueError("Grubbs' test cannot be performed due to non-numeric data. Please check your data.")
+        return -1
+    # There seems to be an issue with the smirnov_grubbs.py when handling
+    # certain large outliers, and I could not figure out why. This is an error
+    # handling to cope with this issue
+    try:
+        return grubbs.test(data, alpha=0.05) 
+
+    except KeyError:
+        raise KeyError("""Grubbs' test cannot be performed due to input data. Try
+                       removing manually any outlier that is largely deviating
+                       from the distribution""")
 
 
 def subset_data(data_frame, parameter, subset_val):

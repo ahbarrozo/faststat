@@ -15,12 +15,14 @@
             <div class="panel panel-default">
               <div class="panel-heading">Dataset 1:</div>
               <div class="panel-body">
-                <select name="parm_1a" id="parm_1a" class="custom-select">
+                <select name="parm_1a" id="parm_1a" class="form-select">
+	          <option value="none" hidden>Choose a column...</option>
                   {% for id in range(0, parm_names|length) %}
                     <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
                   {% endfor %}
                 </select>
-                <select name="parm_1b" id="parm_1b" class="custom-select">
+                <select name="parm_1b" id="parm_1b" class="form-select">
+	          <option value="none" hidden>Choose a column...</option>
                   {% for id in range(0, parm_names|length) %}
                     <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
                   {% endfor %}
@@ -32,12 +34,14 @@
             <div class="panel panel-default">
               <div class="panel-heading">Dataset 2:</div>
               <div class="panel-body">
-                <select name="parm_2a" id="parm_2a" class="custom-select">
+                <select name="parm_2a" id="parm_2a" class="form-select">
+	          <option value="none" hidden>Choose a column...</option>
                   {% for id in range(0, parm_names|length) %}
                     <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
                   {% endfor %}
                 </select>
-                <select name="parm_2b" id="parm_2b" class="custom-select">
+                <select name="parm_2b" id="parm_2b" class="form-select">
+	          <option value="none" hidden>Choose a column...</option>
                   {% for id in range(0, parm_names|length) %}
                     <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
                   {% endfor %}
@@ -56,21 +60,18 @@
             <div class="panel panel-default">
               <div class="panel-heading">Dataset 1:</div>
               <div class="panel-body">
-                <div class="input-group mb-3">
-                  <div class="input-group-prepend">
-                    <label class="input-group-text">{{ parms[0] }}, {{ parms[1] }}</label>
-                  </div>
-                  <select name="value_1a">
-                    {% for id in range(0, parm_values[0]|length) %}
-                      <option value="{{ parm_values[0][id] }}">{{ parm_values[0][id] }}</option>
-                    {% endfor %}
+                <select name="value_1a" id="value_1a" class="form-select">
+		  <option hidden>Choose {{ parms[0] }}</option>
+                  {% for id in range(0, parm_values[0]|length) %}
+                    <option value="{{ parm_values[0][id] }}">{{ parm_values[0][id] }}</option>
+                  {% endfor %}
                   </select>
-                  <select name="value_1b">
+                  <select name="value_1b" id="value_1b" class="form-select">
+		    <option hidden>Choose {{ parms[1] }}</option>
                     {% for id in range(0, parm_values[1]|length) %}
                       <option value="{{ parm_values[1][id] }}">{{ parm_values[1][id] }}</option>
                     {% endfor %}
                   </select>
-                </div>
               </div>
             </div>
           </div>
@@ -78,54 +79,51 @@
             <div class="panel panel-default">
               <div class="panel-heading">Dataset 2:</div>
               <div class="panel-body">
-                <div class="input-group mb-3">   
-                  <div class="input-group-prepend">  
-                    <label class="input-group-text">{{ parms[2] }}, {{ parms[3] }}</label>
-                  </div>
-                  <select name="value_2a">
-                    {% for id in range(0, parm_values[2]|length) %}
-                      <option value="{{ parm_values[2][id] }}">{{ parm_values[2][id] }}</option>
-                    {% endfor %}
-                  </select>
-                  <select name="value_2b">
-                    {% for id in range(0, parm_values[3]|length) %}
-                      <option value="{{ parm_values[3][id] }}">{{ parm_values[3][id] }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
+                <select name="value_2a" id="value_2a" class="form-select">
+		  <option hidden>Choose {{ parms[2] }}</option>
+                  {% for id in range(0, parm_values[2]|length) %}
+                    <option value="{{ parm_values[2][id] }}">{{ parm_values[2][id] }}</option>
+                  {% endfor %}
+                </select>
+                <select name="value_2b" id="value_2b" class="form-select">
+		  <option hidden>Choose {{ parms[3] }}</option>
+                  {% for id in range(0, parm_values[3]|length) %}
+                    <option value="{{ parm_values[3][id] }}">{{ parm_values[3][id] }}</option>
+                  {% endfor %}
+                </select>
               </div>
             </div>
 	  </div>
 	  <button class="btn btn-outline-secondary" type="submit" name="values" value="values">Setup Samples</button>
-          </form>
-	</div>
+        </form>
+      </div>
       {% else %}
-      <form method=post action="">
-        <div class="container">
-          <div class="panel panel-default">
-            <div class="panel-heading">Dataset 1:</div>
-            <div class="panel-body">
-              <div class="input-group mb-3">
-                <div class="input-group-prepend">
-                  <label class="input-group-text">{{ parms[0] }}: {{ values[0] }}, {{ parms[1] }}: {{ values[1] }}</label>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+       <form method=post action="">
+         <div class="container">
+           <div class="panel panel-default">
+             <div class="panel-heading">Dataset 1:</div>
+             <div class="panel-body">
+               <div class="input-group mb-3">
+                 <div class="input-group-prepend">
+                   <label class="input-group-text">{{ parms[0] }}: {{ values[0] }}, {{ parms[1] }}: {{ values[1] }}</label>
+                 </div>
+               </div>
+             </div>
+           </div>
+         </div>
         
-        <div class="container">
-          <div class="panel panel-default">
-            <div class="panel-heading">Dataset 2:</div>
-              <div class="panel-body">
-                <div class="input-group mb-3">
-                  <div class="input-group-prepend">
+         <div class="container">
+           <div class="panel panel-default">
+             <div class="panel-heading">Dataset 2:</div>
+               <div class="panel-body">
+                 <div class="input-group mb-3">
+                   <div class="input-group-prepend">
                     <label class="input-group-text">{{ parms[2] }}: {{ values[2] }}, {{ parms[3] }}: {{ values[3] }}</label>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>        
+                 </div>
+               </div>
+             </div>
+           </div>
+         </div>        
 
 
         <div class="container">
@@ -133,7 +131,8 @@
             <div class="panel-heading">Statistical property:</div>
             <div class="panel-body">
               <div class="input-group mb-3">
-                <select name="statproperty">
+                <select name="statproperty" id="statproperty" class="form-select">
+	          <option hidden>Choose an observable...</option>
                   {% for id in range(0, parm_names|length) %}
                     <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
                   {% endfor %}

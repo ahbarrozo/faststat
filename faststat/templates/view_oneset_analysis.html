@@ -15,13 +15,13 @@
               <div class="panel-heading">Dataset:</div>
               <div class="panel-body">
                   <select name="parm_a" id="parm_a" class="form-select">
-	            <option hidden>Choose a column...</option></option>
+	                <option value="none" hidden>Choose a column...</option>
                     {% for id in range(0, parm_names|length) %}
                       <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
                     {% endfor %}
                   </select>
                   <select name="parm_b" id="parm_b" class="form-select">
-	            <option hidden>Choose a column...</option>
+	                <option value="none" hidden>Choose a column...</option>
                     {% for id in range(0, parm_names|length) %}
                       <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
                     {% endfor %}
@@ -39,13 +39,13 @@
 	      <div class="panel-heading">Dataset:</div>
               <div class="panel-body">
                 <select name="value_a" id="value_a" class="form-select">
-		  <option hidden>Choose {{ parms[0] }}</option>
+  		          <option hidden>Choose {{ parms[0] }}</option>
                   {% for id in range(0, parm_values[0]|length) %}
                     <option value="{{ parm_values[0][id] }}">{{ parm_values[0][id] }}</option>
                   {% endfor %}
                 </select>
                 <select name="value_b" id="value_b" class="form-select">
-		  <option hidden>Choose {{ parms[1] }}</option>
+		          <option hidden>Choose {{ parms[1] }}</option>
                   {% for id in range(0, parm_values[1]|length) %}
                     <option value="{{ parm_values[1][id] }}">{{ parm_values[1][id] }}</option>
                   {% endfor %}
@@ -68,7 +68,7 @@
             <div class="panel-heading">Statistical property:</div>
             <div class="panel-body">
                 <select name="statproperty" id="statproperty" class="form-select">
-		  <option hidden>Choose an observable...</option></option>
+		  <option hidden>Choose an observable...</option>
                   {% for id in range(0, parm_names|length) %}
                     <option value="{{ parm_names[id] }}">{{ parm_names[id] }}</option>
                   {% endfor %}

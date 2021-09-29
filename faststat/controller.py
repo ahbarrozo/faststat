@@ -6,7 +6,7 @@ from sqlalchemy import text
 from werkzeug.utils import secure_filename
 from pandas import DataFrame
 
-from faststat import app, bcrypt, db, UPLOAD_DIR
+from faststat import app, bcrypt, db, UPLOAD_FOLDER
 from faststat.objects import FastStat
 from faststat.forms import ComputeForm, StatForm, LoginForm, RegisterForm
 from faststat.dataparse import DataSet, read_data
@@ -116,14 +116,18 @@ def index():
 
                 info.parms[parm_a] = 0
                 info.parms[parm_b] = 0
-                info.parm_values.append(list(set(info.data_frame[parm_a])))
-                info.parm_values.append(list(set(info.data_frame[parm_b])))
+
+                # Create a list of values to be displayed on HTML select 
+                # objects for the user to choose from
+                parm_values = [list(set(info.data_frame[parm_a]))]
+                parm_values.append(list(set(info.data_frame[parm_b])))
+
                 return render_template(info.template, form=form,
                                        filename=info.file_name,
                                        parm_names=info.parm_names,
                                        stat_func=info.stat_func, 
                                        parms=list(info.parms.keys()),
-                                       parm_values=info.parm_values, 
+                                       parm_values=parm_values, 
                                        statready=False)
 
             # Choice of values of parameters to include in dataset.
@@ -223,10 +227,14 @@ def index():
                 info.parms[0][parm_1b] = 0
                 info.parms[1][parm_2a] = 0
                 info.parms[1][parm_2b] = 0
-                info.parm_values.append(list(set(info.data_frame[parm_1a])))
-                info.parm_values.append(list(set(info.data_frame[parm_1b])))
-                info.parm_values.append(list(set(info.data_frame[parm_2a])))
-                info.parm_values.append(list(set(info.data_frame[parm_2b])))
+
+
+                # Create a list of values to be displayed on HTML select 
+                # objects for the user to choose from
+                parm_values = [list(set(info.data_frame[parm_1a]))]
+                parm_values.append(list(set(info.data_frame[parm_1b])))
+                parm_values.append(list(set(info.data_frame[parm_2a])))
+                parm_values.append(list(set(info.data_frame[parm_2b])))
 
                 return render_template(info.template, 
                                        form=form,
@@ -234,7 +242,7 @@ def index():
                                        parm_names=info.parm_names,
                                        stat_func=info.stat_func,
                                        parms=tuple(info.parms[0].keys()) + tuple(info.parms[1].keys()),
-                                       parm_values=info.parm_values, 
+                                       parm_values=parm_values, 
                                        statready=False)
 
             # Choice of values of parameters to include in dataset.
@@ -510,7 +518,7 @@ def get_df(filename):
     html_file.write(html_form)
     html_file.close()
 
-    return render_template(f'{UPLOAD_DIR}/{filename}.html')
+    return render_template(f'{UPLOAD_FOLDER}/{filename}.html')
 
 @app.route('/logout')
 @login_required

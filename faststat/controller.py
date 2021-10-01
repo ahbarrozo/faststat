@@ -443,29 +443,10 @@ def populate_form_from_instance(instance):
     return form
 
 
-def send_email(user):
-    from flask_mail import Mail, Message
-    mail = Mail(app)
-    msg = Message("Compute Computations Complete",
-                  recipients=[user.email])
-    msg.body = """
-A simulation has been completed by the Flask Compute app.
-Please log in at
-
-http://127.0.0.1:5000/login
-
-to see the results.
-
----
-If you don't want email notifications when a result is found,
-please register a new user and leave the 'notify' field
-unchecked.
-"""
-    mail.send(msg)
-
 @app.route("/about")
 def about():
     return render_template('about.html', title='About')
+
 
 @app.route('/reg', methods=['GET', 'POST'])
 def register():
@@ -509,7 +490,6 @@ def new_calc():
 
 @app.route('/get_df/<filename>')
 def get_df(filename):
-    #global data_frame
     html_form = info.data_frame.to_html()
     html_form = html_form.replace('<table border="1" class="dataframe">', 
                       '<table class="table table-striped">')

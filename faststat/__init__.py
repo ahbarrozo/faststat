@@ -17,7 +17,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(24)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///faststat.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['UPLOAD_FOLDER'] = UPLOAD_PATH # os.path.join('faststat/templates/',UPLOAD_DIR)
+app.config['UPLOAD_FOLDER'] = UPLOAD_PATH 
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1000 * 1000   # limit uploads to 16 MB
 
 db = SQLAlchemy(app)
@@ -25,17 +25,5 @@ bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 login_manager.login_message_category = 'info'
-
-# Email settings
-app.config.update(
-    MAIL_SERVER='smtp.gmail.com',
-    MAIL_PORT=587,
-    MAIL_USE_TLS=True,
-    MAIL_USERNAME='barrozo.ah@gmail.com',
-    MAIL_PASSWORD='',
-    MAIL_DEFAULT_SENDER='Alexandre Barrozo <barrozo.ah@gmail.com>')
-
-filename = None
-data_frame = None
 
 from faststat import controller

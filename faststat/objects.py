@@ -1,6 +1,5 @@
 from werkzeug.utils import secure_filename
-from faststat.dataparse import read_data
-
+import pandas as pd
 
 class FastStat:
     """A class to handle user inputs within FastStat, from the spreadsheet to
@@ -50,13 +49,47 @@ class FastStat:
 
         else:
             self._file_name = secure_filename(file.filename)
-            self._data_frame = read_data(file)
+            self._data_frame = self.read_data(file)
             self._parm_names = self.data_frame.columns.values.tolist()
 
         self._parms = {}
         self._stat_func = None
         self._stat_property = None
         self._template = "view_input.html"
+
+
+    def read_data(self, input_file, num_bin = 3):
+        """Opens MS Excel spreadsheet and converts it to a pandas 
+        DataFrame
+
+        Arguments
+        ---
+
+        input_file: str 
+            Path to a xls or xlsx file
+
+        num_bin : int
+            Number of bins used in this spreadsheet. Use 3 by default
+
+        Returns
+        ---
+            pd.DataFrame format of the spreadsheet"""
+
+        input_data = pd.read_excel(input_file)
+        renamed_columns = list(input_data.columns)
+
+        for i in range(len(renamed_columns)):
+            """Rename 'Unnamed' columns that are formed from merged 
+            cells. These will form bins for analysis"""
+            if renamed_columns[i].find("Unnamed") >= 0:
+                for b in range(num_bin - 1): 
+                    renamed_columns[i+b] = renamed_columns[i-1] + f' bin {b+2}'
+
+                renamed_columns[i-1] += ' bin 1'
+
+        return pd.DataFrame(input_data.values, columns=pd.Index(renamed_columns))
+
+
 
     def reset(self, hard_reset=False):
         if hard_reset:

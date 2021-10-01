@@ -9,7 +9,7 @@ from pandas import DataFrame
 from faststat import app, bcrypt, db, UPLOAD_FOLDER
 from faststat.objects import FastStat
 from faststat.forms import ComputeForm, StatForm, LoginForm, RegisterForm
-from faststat.dataparse import DataSet, read_data
+from faststat.dataparse import DataSet
 from faststat.db_models import User, Compute
 from faststat.compute import display_stat_info, normality_tests, null_hypothesis_tests, one_way_anova, \
                     two_way_anova
@@ -188,7 +188,7 @@ def index():
 
                     dataset1 = DataSet(info.data_frame, prefix +
                                        info.stat_property, **info.parms)
-                    result = one_way_anova(info.data_frame, dataset1, info.stat_property)
+                    result = one_way_anova(dataset1.data_frame, info.stat_property)
                     result = result.to_html()
 
                 if dataset1.data_set.empty or len(dataset1.data_set) < 2:
@@ -383,7 +383,8 @@ def index():
 
                         return redirect(url_for('index'))
                     try:
-                        result, plot = two_way_anova(info.data_frame, dataset1, dataset2,
+                        result, plot = two_way_anova(dataset1.data_frame, 
+                                                     dataset2.data_frame,
                                                      parameter, value_a, value_b,
                                                      info.stat_property)
                     except ValueError:
